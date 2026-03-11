@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Youth Montreal Church Finder</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Youth & Young Adult Church Map — Montreal</h1>
+        <p>Find Bible studies, prayer meetings, church services, and fellowship in the next 7 days.</p>
+      </div>
+      <button id="toggle-admin" type="button">ADM Mode</button>
+    </header>
+
+    <main>
+      <section id="map" aria-label="Map of churches in Montreal"></section>
+
+      <aside>
+        <h2>Church details</h2>
+        <p id="empty-state">Click a marker on the map to view details.</p>
+        <div id="details" class="hidden"></div>
+
+        <section id="admin-panel" class="hidden">
+          <h3>Add / update church</h3>
+          <form id="church-form">
+            <label>
+              Church name
+              <input name="name" required />
+            </label>
+            <label>
+              Latitude
+              <input type="number" step="any" name="lat" required />
+            </label>
+            <label>
+              Longitude
+              <input type="number" step="any" name="lng" required />
+            </label>
+            <label>
+              Website
+              <input type="url" name="website" />
+            </label>
+            <label>
+              Instagram
+              <input type="url" name="instagram" />
+            </label>
+            <label>
+              Facebook
+              <input type="url" name="facebook" />
+            </label>
+            <label>
+              WhatsApp
+              <input type="url" name="whatsapp" />
+            </label>
+
+            <fieldset>
+              <legend>Gatherings (next 7 days)</legend>
+              <div id="events-list"></div>
+              <button id="add-event" type="button">+ Add gathering</button>
+            </fieldset>
+
+            <button type="submit">Save church</button>
+          </form>
+        </section>
+      </aside>
+    </main>
+
+    <template id="event-template">
+      <div class="event-row">
+        <input type="date" name="date" required />
+        <input type="time" name="time" required />
+        <input type="text" name="type" placeholder="Bible study / Service" required />
+        <button type="button" class="remove-event">✕</button>
+      </div>
+    </template>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="app.js"></script>
+  </body>
+</html>
