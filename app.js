@@ -95,7 +95,8 @@ const state = {
   markers: new Map(),
   language: localStorage.getItem(LANGUAGE_KEY) || 'en',
   selectedChurchId: null,
-  mapCaptureEnabled: false
+  mapCaptureEnabled: false,
+  isAdminMode: false
 };
 
 const map = L.map('map', {
@@ -141,7 +142,7 @@ function setLanguage(language) {
   document.querySelectorAll('[data-i18n]').forEach((node) => {
     node.textContent = t(node.dataset.i18n);
   });
-  toggleAdmin.textContent = adminPanel.classList.contains('hidden') ? t('admMode') : t('closeAdm');
+  toggleAdmin.textContent = state.isAdminMode ? t('closeAdm') : t('admMode');
   toggleMapCapture.textContent = state.mapCaptureEnabled ? t('stopMapCapture') : t('startMapCapture');
   adminTitle.textContent = state.selectedChurchId ? t('editingChurch') : t('addUpdateChurch');
   if (state.selectedChurchId) {
@@ -177,7 +178,7 @@ function renderChurchDetails(church) {
         ${church.facebook ? ` · <a href="${church.facebook}" target="_blank" rel="noreferrer">${t('facebook')}</a>` : ''}
         ${church.whatsapp ? ` · <a href="${church.whatsapp}" target="_blank" rel="noreferrer">${t('whatsapp')}</a>` : ''}
       </p>
-      <button type="button" class="edit-pin-btn" data-id="${church.id}">${t('editPin')}</button>
+      ${state.isAdminMode ? `<button type="button" class="edit-pin-btn" data-id="${church.id}">${t('editPin')}</button>` : ''}
     </article>
   `;
   details.querySelector('.edit-pin-btn')?.addEventListener('click', () => startEditChurch(church.id));
@@ -222,9 +223,11 @@ function resetForm() {
 }
 
 function startEditChurch(churchId) {
+  if (!state.isAdminMode) return;
   const church = state.churches.find((item) => item.id === churchId);
   if (!church) return;
   adminPanel.classList.remove('hidden');
+  state.isAdminMode = true;
   toggleAdmin.textContent = t('closeAdm');
 
   churchForm.elements.churchId.value = church.id;
@@ -261,9 +264,14 @@ async function reverseGeocode(lat, lng) {
 }
 
 toggleAdmin.addEventListener('click', () => {
-  adminPanel.classList.toggle('hidden');
-  toggleAdmin.textContent = adminPanel.classList.contains('hidden') ? t('admMode') : t('closeAdm');
-  if (adminPanel.classList.contains('hidden')) resetForm();
+  state.isAdminMode = !state.isAdminMode;
+  adminPanel.classList.toggle('hidden', !state.isAdminMode);
+  toggleAdmin.textContent = state.isAdminMode ? t('closeAdm') : t('admMode');
+  if (!state.isAdminMode) resetForm();
+  if (state.selectedChurchId) {
+    const selected = state.churches.find((item) => item.id === state.selectedChurchId);
+    if (selected) renderChurchDetails(selected);
+  }
 });
 
 addEventButton.addEventListener('click', () => addEventRow());

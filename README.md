@@ -11,7 +11,7 @@ Simple web app to help youth and young adults in Montreal discover nearby church
   - map deep-link for directions
   - website + social links (Instagram, Facebook, WhatsApp) when available
   - languages spoken
-- ADM mode to add and edit church pins.
+- ADM mode to add and edit church pins (pin editing is only available in ADM mode).
 - In ADM mode, enable map capture and click the map to auto-fill coordinates and reverse-geocoded address.
 - Interface language selector with support for: English, French (CA), Spanish (LatAm), Italian, Portuguese (BR), Korean, Chinese, Ukrainian, Hebrew.
 - Data persistence in `localStorage` for quick prototyping.
