@@ -3,11 +3,17 @@ const LANGUAGE_KEY = 'youth-montreal-language';
 
 const TRANSLATIONS = {
   en: {
-    appTitle: 'Youth & Young Adult Church Map — Montreal',
-    appSubtitle: 'Find Bible studies, prayer meetings, church services, and fellowship in the next 7 days.',
     language: 'Language',
     admMode: 'ADM Mode',
     closeAdm: 'Close ADM',
+    heroTitle: 'Connecting young people to local churches across Montreal.',
+    heroBody: 'Our vision is to help every youth and young adult quickly find a nearby Bible study, prayer meeting, church service, or fellowship this week.',
+    instagramLink: 'Follow the movement on Instagram',
+    findChurch: 'Find a church near you',
+    addressSearch: 'Your address',
+    radius: 'Radius',
+    findWithinRadius: 'Find within radius',
+    openMap: 'Open map',
     churchDetails: 'Church details',
     emptyState: 'Click a marker on the map to view details.',
     addUpdateChurch: 'Add / update church',
@@ -33,21 +39,51 @@ const TRANSLATIONS = {
     languagesLabel: 'Languages:',
     editPin: 'Edit pin',
     locateLoading: 'Looking up address…',
-    mapCaptureOn: 'Map capture enabled: click map to set pin and address.',
-    mapCaptureOff: 'Map capture disabled.'
+    searchLoading: 'Searching nearby churches…',
+    searchNoResults: 'No churches found in that radius yet.',
+    searchResultCount: 'churches found near your address.'
   },
   'fr-CA': {
-    appTitle: 'Carte des églises jeunesse et jeunes adultes — Montréal',
-    appSubtitle: 'Trouvez des études bibliques, prières, cultes et temps de fraternité dans les 7 prochains jours.',
-    language: 'Langue', admMode: 'Mode ADM', closeAdm: 'Fermer ADM', churchDetails: "Détails de l'église", emptyState: 'Cliquez un repère sur la carte pour voir les détails.', addUpdateChurch: 'Ajouter / modifier une église', editingChurch: 'Modification de l’église', churchName: "Nom de l'église", address: 'Adresse', latitude: 'Latitude', longitude: 'Longitude', mapClickHint: 'En mode édition, cliquez sur la carte pour capturer automatiquement coordonnées et adresse.', startMapCapture: 'Activer la capture carte', stopMapCapture: 'Désactiver la capture carte', languagesSpoken: 'Langues parlées', website: 'Site web', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', gatherings: 'Rencontres (7 prochains jours)', addGathering: '+ Ajouter une rencontre', saveChurch: "Enregistrer l'église", cancelEdit: 'Annuler', openMaps: 'Ouvrir le point dans une app de cartes', noGatherings: 'Aucune rencontre indiquée dans les 7 prochains jours.', languagesLabel: 'Langues :', editPin: 'Modifier le point', locateLoading: 'Recherche de l’adresse…', mapCaptureOn: 'Capture carte activée : cliquez sur la carte.', mapCaptureOff: 'Capture carte désactivée.'
-  },
-  'es-LA': { appTitle: 'Mapa de iglesias para jóvenes — Montreal', appSubtitle: 'Encuentra estudios bíblicos, reuniones de oración, servicios y confraternidad en los próximos 7 días.', language: 'Idioma', admMode: 'Modo ADM', closeAdm: 'Cerrar ADM', churchDetails: 'Detalles de la iglesia', emptyState: 'Haz clic en un marcador para ver detalles.', addUpdateChurch: 'Agregar / actualizar iglesia', editingChurch: 'Editando iglesia', churchName: 'Nombre de la iglesia', address: 'Dirección', latitude: 'Latitud', longitude: 'Longitud', mapClickHint: 'Al editar, haz clic en el mapa para capturar coordenadas y dirección.', startMapCapture: 'Activar captura en mapa', stopMapCapture: 'Desactivar captura en mapa', languagesSpoken: 'Idiomas hablados', website: 'Sitio web', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', gatherings: 'Reuniones (próximos 7 días)', addGathering: '+ Agregar reunión', saveChurch: 'Guardar iglesia', cancelEdit: 'Cancelar edición', openMaps: 'Abrir ubicación en mapas', noGatherings: 'No hay reuniones en los próximos 7 días.', languagesLabel: 'Idiomas:', editPin: 'Editar pin', locateLoading: 'Buscando dirección…', mapCaptureOn: 'Captura de mapa activada.', mapCaptureOff: 'Captura de mapa desactivada.' },
-  it: { appTitle: 'Mappa chiese giovani — Montreal', appSubtitle: 'Trova studi biblici, preghiera, culti e fellowship nei prossimi 7 giorni.', language: 'Lingua', admMode: 'Modalità ADM', closeAdm: 'Chiudi ADM', churchDetails: 'Dettagli chiesa', emptyState: 'Clicca un pin per vedere i dettagli.', addUpdateChurch: 'Aggiungi / aggiorna chiesa', editingChurch: 'Modifica chiesa', churchName: 'Nome chiesa', address: 'Indirizzo', latitude: 'Latitudine', longitude: 'Longitudine', mapClickHint: 'In modifica, clicca la mappa per coordinate e indirizzo.', startMapCapture: 'Attiva cattura mappa', stopMapCapture: 'Disattiva cattura mappa', languagesSpoken: 'Lingue parlate', website: 'Sito web', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', gatherings: 'Incontri (prossimi 7 giorni)', addGathering: '+ Aggiungi incontro', saveChurch: 'Salva chiesa', cancelEdit: 'Annulla', openMaps: 'Apri pin in mappe', noGatherings: 'Nessun incontro nei prossimi 7 giorni.', languagesLabel: 'Lingue:', editPin: 'Modifica pin', locateLoading: 'Ricerca indirizzo…', mapCaptureOn: 'Cattura mappa attiva.', mapCaptureOff: 'Cattura mappa disattiva.' },
-  'pt-BR': { appTitle: 'Mapa de igrejas jovens — Montreal', appSubtitle: 'Encontre estudos bíblicos, oração, cultos e comunhão nos próximos 7 dias.', language: 'Idioma', admMode: 'Modo ADM', closeAdm: 'Fechar ADM', churchDetails: 'Detalhes da igreja', emptyState: 'Clique em um marcador para ver detalhes.', addUpdateChurch: 'Adicionar / atualizar igreja', editingChurch: 'Editando igreja', churchName: 'Nome da igreja', address: 'Endereço', latitude: 'Latitude', longitude: 'Longitude', mapClickHint: 'Ao editar, clique no mapa para capturar coordenadas e endereço.', startMapCapture: 'Ativar captura no mapa', stopMapCapture: 'Desativar captura no mapa', languagesSpoken: 'Idiomas falados', website: 'Site', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', gatherings: 'Encontros (próximos 7 dias)', addGathering: '+ Adicionar encontro', saveChurch: 'Salvar igreja', cancelEdit: 'Cancelar edição', openMaps: 'Abrir pin no mapa', noGatherings: 'Sem encontros nos próximos 7 dias.', languagesLabel: 'Idiomas:', editPin: 'Editar pin', locateLoading: 'Buscando endereço…', mapCaptureOn: 'Captura de mapa ativada.', mapCaptureOff: 'Captura de mapa desativada.' },
-  ko: { appTitle: '몬트리올 청년 교회 지도', appSubtitle: '향후 7일 내 성경공부, 기도모임, 예배, 교제를 찾아보세요.', language: '언어', admMode: '관리자 모드', closeAdm: '관리자 닫기', churchDetails: '교회 정보', emptyState: '지도 마커를 눌러 상세 정보를 확인하세요.', addUpdateChurch: '교회 추가 / 수정', editingChurch: '교회 수정 중', churchName: '교회 이름', address: '주소', latitude: '위도', longitude: '경도', mapClickHint: '수정 중 지도 클릭으로 좌표/주소를 자동 입력합니다.', startMapCapture: '지도 캡처 켜기', stopMapCapture: '지도 캡처 끄기', languagesSpoken: '사용 언어', website: '웹사이트', instagram: '인스타그램', facebook: '페이스북', whatsapp: '왓츠앱', gatherings: '모임 (향후 7일)', addGathering: '+ 모임 추가', saveChurch: '저장', cancelEdit: '수정 취소', openMaps: '지도 앱에서 열기', noGatherings: '향후 7일 모임이 없습니다.', languagesLabel: '언어:', editPin: '핀 수정', locateLoading: '주소 조회 중…', mapCaptureOn: '지도 캡처가 활성화되었습니다.', mapCaptureOff: '지도 캡처가 비활성화되었습니다.' },
-  zh: { appTitle: '蒙特利尔青年教会地图', appSubtitle: '查找未来7天的查经、祷告会、主日和团契。', language: '语言', admMode: '管理员模式', closeAdm: '关闭管理员', churchDetails: '教会详情', emptyState: '点击地图标记查看详情。', addUpdateChurch: '添加 / 更新教会', editingChurch: '正在编辑教会', churchName: '教会名称', address: '地址', latitude: '纬度', longitude: '经度', mapClickHint: '编辑时点击地图可自动获取坐标和地址。', startMapCapture: '开启地图捕捉', stopMapCapture: '关闭地图捕捉', languagesSpoken: '可使用语言', website: '网站', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', gatherings: '聚会（未来7天）', addGathering: '+ 添加聚会', saveChurch: '保存教会', cancelEdit: '取消编辑', openMaps: '在地图应用中打开', noGatherings: '未来7天暂无聚会。', languagesLabel: '语言：', editPin: '编辑位置', locateLoading: '正在查询地址…', mapCaptureOn: '已开启地图捕捉。', mapCaptureOff: '已关闭地图捕捉。' },
-  uk: { appTitle: 'Мапа церков для молоді — Монреаль', appSubtitle: 'Знайдіть біблійні вивчення, молитовні зустрічі, служіння та спілкування на наступні 7 днів.', language: 'Мова', admMode: 'Режим ADM', closeAdm: 'Закрити ADM', churchDetails: 'Деталі церкви', emptyState: 'Натисніть маркер на мапі, щоб побачити деталі.', addUpdateChurch: 'Додати / оновити церкву', editingChurch: 'Редагування церкви', churchName: 'Назва церкви', address: 'Адреса', latitude: 'Широта', longitude: 'Довгота', mapClickHint: 'Під час редагування натисніть мапу для координат і адреси.', startMapCapture: 'Увімкнути захоплення з мапи', stopMapCapture: 'Вимкнути захоплення з мапи', languagesSpoken: 'Мови спілкування', website: 'Вебсайт', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', gatherings: 'Зустрічі (наступні 7 днів)', addGathering: '+ Додати зустріч', saveChurch: 'Зберегти церкву', cancelEdit: 'Скасувати редагування', openMaps: 'Відкрити пін у картах', noGatherings: 'Немає зустрічей у наступні 7 днів.', languagesLabel: 'Мови:', editPin: 'Редагувати пін', locateLoading: 'Пошук адреси…', mapCaptureOn: 'Захоплення з мапи увімкнено.', mapCaptureOff: 'Захоплення з мапи вимкнено.' },
-  he: { appTitle: 'מפת כנסיות לצעירים — מונטריאול', appSubtitle: 'מצאו לימוד תנ״ך, תפילה, תפילה קהילתית ומפגשים ב-7 הימים הקרובים.', language: 'שפה', admMode: 'מצב מנהל', closeAdm: 'סגור מנהל', churchDetails: 'פרטי כנסייה', emptyState: 'לחצו על סמן במפה כדי לראות פרטים.', addUpdateChurch: 'הוספה / עדכון כנסייה', editingChurch: 'עריכת כנסייה', churchName: 'שם הכנסייה', address: 'כתובת', latitude: 'קו רוחב', longitude: 'קו אורך', mapClickHint: 'בזמן עריכה לחצו על המפה כדי ללכוד כתובת וקואורדינטות.', startMapCapture: 'הפעל לכידה מהמפה', stopMapCapture: 'כבה לכידה מהמפה', languagesSpoken: 'שפות מדוברות', website: 'אתר', instagram: 'אינסטגרם', facebook: 'פייסבוק', whatsapp: 'וואטסאפ', gatherings: 'מפגשים (7 הימים הקרובים)', addGathering: '+ הוסף מפגש', saveChurch: 'שמור כנסייה', cancelEdit: 'בטל עריכה', openMaps: 'פתח נקודה באפליקציית מפות', noGatherings: 'אין מפגשים ב-7 הימים הקרובים.', languagesLabel: 'שפות:', editPin: 'ערוך מיקום', locateLoading: 'מחפש כתובת…', mapCaptureOn: 'לכידה מהמפה הופעלה.', mapCaptureOff: 'לכידה מהמפה כבויה.' }
+    language: 'Langue',
+    admMode: 'Mode ADM',
+    closeAdm: 'Fermer ADM',
+    heroTitle: 'Connecter les jeunes aux églises locales partout à Montréal.',
+    heroBody: 'Notre vision est d’aider chaque jeune à trouver rapidement une étude biblique, une réunion de prière, un culte ou un temps de fraternité cette semaine.',
+    instagramLink: 'Suivre le mouvement sur Instagram',
+    findChurch: 'Trouver une église près de vous',
+    addressSearch: 'Votre adresse',
+    radius: 'Rayon',
+    findWithinRadius: 'Rechercher dans le rayon',
+    openMap: 'Ouvrir la carte',
+    churchDetails: "Détails de l'église",
+    emptyState: 'Cliquez sur un marqueur pour voir les détails.',
+    addUpdateChurch: 'Ajouter / modifier une église',
+    editingChurch: 'Modification de l’église',
+    churchName: "Nom de l'église",
+    address: 'Adresse',
+    latitude: 'Latitude',
+    longitude: 'Longitude',
+    mapClickHint: 'En mode édition, cliquez sur la carte pour récupérer automatiquement les coordonnées et l’adresse.',
+    startMapCapture: 'Activer capture carte',
+    stopMapCapture: 'Désactiver capture carte',
+    languagesSpoken: 'Langues parlées',
+    website: 'Site web',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    whatsapp: 'WhatsApp',
+    gatherings: 'Rencontres (7 prochains jours)',
+    addGathering: '+ Ajouter rencontre',
+    saveChurch: "Enregistrer l'église",
+    cancelEdit: 'Annuler',
+    openMaps: 'Ouvrir le point dans une app cartes',
+    noGatherings: 'Aucune rencontre indiquée dans les 7 prochains jours.',
+    languagesLabel: 'Langues :',
+    editPin: 'Modifier le point',
+    locateLoading: 'Recherche de l’adresse…',
+    searchLoading: 'Recherche des églises proches…',
+    searchNoResults: 'Aucune église trouvée dans ce rayon.',
+    searchResultCount: 'églises trouvées près de votre adresse.'
+  }
 };
 
 const rtlLanguages = new Set(['he']);
@@ -75,29 +111,45 @@ const defaultChurches = [
       { date: inDays(1), time: '19:00', type: 'Young Adults Prayer Night' },
       { date: inDays(3), time: '18:30', type: 'Bible Study Group' }
     ]
+  },
+  {
+    id: crypto.randomUUID(),
+    name: 'La Chapelle Montréal',
+    address: '177 Rue Saint-Jacques, Montreal, QC',
+    lat: 45.5077,
+    lng: -73.554,
+    languages: ['Français', 'English', 'Español'],
+    website: 'https://lachapelle.me/',
+    instagram: 'https://www.instagram.com/lachapelle.me/',
+    facebook: 'https://www.facebook.com/lachapelleme/',
+    whatsapp: '',
+    events: [{ date: inDays(2), time: '19:30', type: 'Youth Fellowship' }]
   }
 ];
-
-const t = (key) => TRANSLATIONS[state.language]?.[key] || TRANSLATIONS.en[key] || key;
-
-const parseChurches = () => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return defaultChurches;
-  try {
-    return JSON.parse(saved).map((church) => ({ ...church, languages: church.languages || [] }));
-  } catch {
-    return defaultChurches;
-  }
-};
 
 const state = {
   churches: parseChurches(),
   markers: new Map(),
+  filteredIds: null,
   language: localStorage.getItem(LANGUAGE_KEY) || 'en',
   selectedChurchId: null,
   mapCaptureEnabled: false,
   isAdminMode: false
 };
+
+function t(key) {
+  return TRANSLATIONS[state.language]?.[key] || TRANSLATIONS.en[key] || key;
+}
+
+function parseChurches() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return defaultChurches;
+  try {
+    return JSON.parse(saved).map((church) => ({ ...church, languages: church.languages || [], events: church.events || [] }));
+  } catch {
+    return defaultChurches;
+  }
+}
 
 const map = L.map('map', {
   dragging: true,
@@ -108,6 +160,7 @@ const map = L.map('map', {
   keyboard: true,
   tap: true
 }).setView([45.5017, -73.5673], 10);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '&copy; OpenStreetMap contributors'
@@ -115,6 +168,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const details = document.querySelector('#details');
 const emptyState = document.querySelector('#empty-state');
+const finderStatus = document.querySelector('#finder-status');
 const adminPanel = document.querySelector('#admin-panel');
 const adminTitle = document.querySelector('#admin-title');
 const toggleAdmin = document.querySelector('#toggle-admin');
@@ -125,6 +179,8 @@ const addEventButton = document.querySelector('#add-event');
 const cancelEditButton = document.querySelector('#cancel-edit');
 const toggleMapCapture = document.querySelector('#toggle-map-capture');
 const languageSelect = document.querySelector('#language-select');
+const finderForm = document.querySelector('#finder-form');
+const openMapButton = document.querySelector('#open-map');
 
 function saveChurches() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.churches));
@@ -169,9 +225,7 @@ function renderChurchDetails(church) {
       ${church.address ? `<p>${church.address}</p>` : ''}
       <p><a href="${mapLink(church)}" target="_blank" rel="noreferrer">${t('openMaps')}</a></p>
       ${church.languages?.length ? `<p><strong>${t('languagesLabel')}</strong> ${church.languages.join(', ')}</p>` : ''}
-      <ul>
-        ${upcoming.length ? upcoming.map((event) => `<li>${event.date} ${event.time} — ${event.type}</li>`).join('') : `<li>${t('noGatherings')}</li>`}
-      </ul>
+      <ul>${upcoming.length ? upcoming.map((e) => `<li>${e.date} ${e.time} — ${e.type}</li>`).join('') : `<li>${t('noGatherings')}</li>`}</ul>
       <p>
         ${church.website ? `<a href="${church.website}" target="_blank" rel="noreferrer">${t('website')}</a>` : ''}
         ${church.instagram ? ` · <a href="${church.instagram}" target="_blank" rel="noreferrer">${t('instagram')}</a>` : ''}
@@ -187,6 +241,7 @@ function renderChurchDetails(church) {
 }
 
 function addMarker(church) {
+  if (state.filteredIds && !state.filteredIds.has(church.id)) return;
   const marker = L.marker([Number(church.lat), Number(church.lng)]).addTo(map);
   marker.bindPopup(`<strong>${church.name}</strong>`);
   marker.on('click', () => {
@@ -227,7 +282,6 @@ function startEditChurch(churchId) {
   const church = state.churches.find((item) => item.id === churchId);
   if (!church) return;
   adminPanel.classList.remove('hidden');
-  state.isAdminMode = true;
   toggleAdmin.textContent = t('closeAdm');
 
   churchForm.elements.churchId.value = church.id;
@@ -251,16 +305,30 @@ function startEditChurch(churchId) {
 
 async function reverseGeocode(lat, lng) {
   try {
-    const result = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-      { headers: { Accept: 'application/json' } }
-    );
+    const result = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
     if (!result.ok) return '';
     const data = await result.json();
     return data.display_name || '';
   } catch {
     return '';
   }
+}
+
+async function geocodeAddress(address) {
+  const query = encodeURIComponent(address);
+  const result = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${query}`);
+  if (!result.ok) return null;
+  const data = await result.json();
+  if (!data.length) return null;
+  return { lat: Number(data[0].lat), lng: Number(data[0].lon) };
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
 }
 
 toggleAdmin.addEventListener('click', () => {
@@ -287,8 +355,45 @@ map.on('click', async (event) => {
   churchForm.elements.lat.value = event.latlng.lat.toFixed(6);
   churchForm.elements.lng.value = event.latlng.lng.toFixed(6);
   churchForm.elements.address.value = t('locateLoading');
-  const address = await reverseGeocode(event.latlng.lat, event.latlng.lng);
-  churchForm.elements.address.value = address;
+  churchForm.elements.address.value = await reverseGeocode(event.latlng.lat, event.latlng.lng);
+});
+
+finderForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const address = finderForm.elements.address.value.trim();
+  const radiusKm = Number(finderForm.elements.radiusKm.value);
+  if (!address) return;
+
+  finderStatus.textContent = t('searchLoading');
+  const point = await geocodeAddress(address);
+  if (!point) {
+    finderStatus.textContent = t('searchNoResults');
+    return;
+  }
+
+  const matches = state.churches.filter((church) => haversineKm(point.lat, point.lng, Number(church.lat), Number(church.lng)) <= radiusKm);
+  state.filteredIds = new Set(matches.map((church) => church.id));
+  renderMarkers();
+
+  if (!matches.length) {
+    finderStatus.textContent = t('searchNoResults');
+    map.setView([point.lat, point.lng], 12);
+  } else {
+    finderStatus.textContent = `${matches.length} ${t('searchResultCount')}`;
+    const bounds = L.latLngBounds(matches.map((church) => [Number(church.lat), Number(church.lng)]));
+    map.fitBounds(bounds.pad(0.25));
+    state.selectedChurchId = matches[0].id;
+    renderChurchDetails(matches[0]);
+  }
+
+  document.querySelector('#map-section').scrollIntoView({ behavior: 'smooth' });
+});
+
+openMapButton.addEventListener('click', () => {
+  state.filteredIds = null;
+  renderMarkers();
+  map.setView([45.5017, -73.5673], 10);
+  document.querySelector('#map-section').scrollIntoView({ behavior: 'smooth' });
 });
 
 churchForm.addEventListener('submit', (event) => {
@@ -323,13 +428,11 @@ churchForm.addEventListener('submit', (event) => {
   };
 
   const existingIndex = state.churches.findIndex((item) => item.id === church.id);
-  if (existingIndex >= 0) {
-    state.churches[existingIndex] = church;
-  } else {
-    state.churches.push(church);
-  }
+  if (existingIndex >= 0) state.churches[existingIndex] = church;
+  else state.churches.push(church);
 
   saveChurches();
+  state.filteredIds = null;
   renderMarkers();
   state.selectedChurchId = church.id;
   renderChurchDetails(church);
