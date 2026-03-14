@@ -1,8 +1,5 @@
 import { t } from '../i18n.js';
-
-export function mapLink(church) {
-  return `https://www.google.com/maps/search/?api=1&query=${church.lat},${church.lng}`;
-}
+import { googlePlaceLink } from '../utils/googlePlace.js';
 
 export function renderChurchDetails({ state, church, detailsElement, emptyStateElement, onEdit }) {
   const today = new Date();
@@ -20,7 +17,8 @@ export function renderChurchDetails({ state, church, detailsElement, emptyStateE
     <article class="detail-card">
       <h3>${church.name}</h3>
       ${church.address ? `<p>${church.address}</p>` : ''}
-      <p><a href="${mapLink(church)}" target="_blank" rel="noreferrer">${t(state, 'openMaps')}</a></p>
+      <p><a href="${googlePlaceLink(church)}" target="_blank" rel="noreferrer">${t(state, 'openMaps')}</a></p>
+      ${church.googlePlaceId ? `<p><strong>${t(state, 'googlePlaceIdLabel')}</strong> ${church.googlePlaceId}</p>` : ''}
       ${church.languages?.length ? `<p><strong>${t(state, 'languagesLabel')}</strong> ${church.languages.join(', ')}</p>` : ''}
       <ul>${upcoming.length ? upcoming.map((e) => `<li>${e.date} ${e.time} — ${e.type}</li>`).join('') : `<li>${t(state, 'noGatherings')}</li>`}</ul>
       <p>

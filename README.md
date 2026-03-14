@@ -24,6 +24,7 @@ The app is still a lightweight static frontend, but code is now split into focus
 - Address + radius search to find nearby churches
 - Interactive Leaflet map (drag/swipe + pinch/scroll zoom)
 - Church details with upcoming 7-day gatherings and social links
+- Google Maps reference workflow: store a Google Maps pin URL and optional Google Place ID per church
 - ADM-only editing with map click capture + reverse geocoding
 - Multilingual interface with language selector
 - Data persisted in `localStorage`

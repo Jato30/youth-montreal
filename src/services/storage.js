@@ -5,7 +5,7 @@ export function loadChurches() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) return defaultChurches;
   try {
-    return JSON.parse(saved).map((church) => ({ ...church, languages: church.languages || [], events: church.events || [] }));
+    return JSON.parse(saved).map((church) => ({ ...church, googleMapsUrl: church.googleMapsUrl || '', googlePlaceId: church.googlePlaceId || '', languages: church.languages || [], events: church.events || [] }));
   } catch {
     return defaultChurches;
   }

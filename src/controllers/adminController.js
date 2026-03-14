@@ -34,6 +34,8 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     elements.churchForm.elements.churchId.value = church.id;
     elements.churchForm.elements.name.value = church.name;
     elements.churchForm.elements.address.value = church.address || '';
+    elements.churchForm.elements.googleMapsUrl.value = church.googleMapsUrl || '';
+    elements.churchForm.elements.googlePlaceId.value = church.googlePlaceId || '';
     elements.churchForm.elements.lat.value = church.lat;
     elements.churchForm.elements.lng.value = church.lng;
     elements.churchForm.elements.languages.value = (church.languages || []).join(', ');
@@ -94,6 +96,8 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       id: formData.get('churchId') || crypto.randomUUID(),
       name: formData.get('name').trim(),
       address: formData.get('address').trim(),
+      googleMapsUrl: formData.get('googleMapsUrl').trim(),
+      googlePlaceId: formData.get('googlePlaceId').trim(),
       lat: Number(formData.get('lat')),
       lng: Number(formData.get('lng')),
       languages: formData.get('languages').split(',').map((item) => item.trim()).filter(Boolean),
