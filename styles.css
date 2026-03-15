@@ -4,14 +4,11 @@
   --text: #111827;
   --muted: #6b7280;
   --dark: #0b0b0d;
-  --accent: #111827;
   --line: #d1d5db;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -79,7 +76,6 @@ body {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 1rem;
-  align-items: stretch;
 }
 
 .eyebrow {
@@ -99,21 +95,46 @@ body {
   max-width: 60ch;
 }
 
-.finder-card {
+.finder-card,
+.calendar-filters,
+.contact-layout section,
+.calendar-list,
+aside {
   background: var(--card);
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
 }
+
+.finder-card { display: flex; flex-direction: column; gap: 0.7rem; }
 
 .finder-actions,
 .admin-actions {
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0 1.2rem 1rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: #d1d5db;
+  color: #111827;
+}
+
+.tab-btn.active {
+  background: #111827;
+  color: #fff;
+}
+
+.view-section.hidden,
+.hidden {
+  display: none;
 }
 
 main {
@@ -124,6 +145,8 @@ main {
   height: min(74vh, 880px);
 }
 
+.map-column { min-height: 0; }
+
 #map {
   border-radius: 1rem;
   overflow: hidden;
@@ -132,15 +155,34 @@ main {
   touch-action: pan-x pan-y;
 }
 
-aside {
-  background: var(--card);
-  border-radius: 1rem;
-  border: 1px solid #e5e7eb;
-  padding: 1rem;
+aside { overflow: auto; }
+
+.calendar-layout,
+.contact-layout {
+  padding: 0 1.2rem 1.2rem;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 2fr);
+  gap: 1rem;
+}
+
+.calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-height: 72vh;
   overflow: auto;
 }
 
-.hidden { display: none; }
+.calendar-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.7rem;
+  padding: 0.75rem;
+}
+
+.calendar-item h4,
+.calendar-item p {
+  margin: 0 0 0.35rem;
+}
 
 label {
   display: flex;
@@ -152,6 +194,7 @@ label {
 
 input,
 select,
+textarea,
 button {
   border-radius: 0.55rem;
   border: 1px solid var(--line);
@@ -167,9 +210,7 @@ button {
   cursor: pointer;
 }
 
-button.secondary {
-  background: #4b5563;
-}
+button.secondary { background: #4b5563; }
 
 .help-text {
   margin: 0;
@@ -187,30 +228,20 @@ fieldset,
 
 .event-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.5fr auto;
+  grid-template-columns: 1fr 1fr 1.5fr 1fr 1fr auto;
   gap: 0.4rem;
   margin-bottom: 0.45rem;
 }
 
-
-.map-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  min-height: 0;
-}
-
 @media (max-width: 980px) {
   .landing,
-  main {
+  main,
+  .calendar-layout,
+  .contact-layout {
     grid-template-columns: 1fr;
   }
 
-  main {
-    height: auto;
-  }
+  main { height: auto; }
 
-  #map {
-    height: 55vh;
-  }
+  #map { height: 55vh; }
 }

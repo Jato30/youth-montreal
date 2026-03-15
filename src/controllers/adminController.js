@@ -1,14 +1,17 @@
 import { reverseGeocode } from '../services/geocoding.js';
-import { saveChurches } from '../services/storage.js';
+import { saveChurches } from '../services/repository.js';
 import { t } from '../i18n.js';
+import { ADM_PASSCODE } from '../config.js';
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
-function addEventRow(eventsList, eventTemplate, event = { date: todayDate(), time: '19:00', type: '' }) {
+function addEventRow(eventsList, eventTemplate, event = { date: todayDate(), time: '19:00', type: '', recurrence: 'none', until: '' }) {
   const node = eventTemplate.content.firstElementChild.cloneNode(true);
   node.querySelector('[name="date"]').value = event.date;
   node.querySelector('[name="time"]').value = event.time;
   node.querySelector('[name="type"]').value = event.type;
+  node.querySelector('[name="recurrence"]').value = event.recurrence || 'none';
+  node.querySelector('[name="until"]').value = event.until || '';
   node.querySelector('.remove-event').addEventListener('click', () => node.remove());
   eventsList.appendChild(node);
 }
@@ -53,6 +56,10 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   };
 
   elements.toggleAdmin.addEventListener('click', () => {
+    if (!state.isAdminMode) {
+      const code = prompt('Enter ADM passcode:');
+      if (code !== ADM_PASSCODE) return;
+    }
     state.isAdminMode = !state.isAdminMode;
     elements.adminPanel.classList.toggle('hidden', !state.isAdminMode);
     elements.toggleAdmin.textContent = state.isAdminMode ? t(state, 'closeAdm') : t(state, 'admMode');
@@ -79,7 +86,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     elements.churchForm.elements.address.value = await reverseGeocode(event.latlng.lat, event.latlng.lng);
   });
 
-  elements.churchForm.addEventListener('submit', (event) => {
+  elements.churchForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(elements.churchForm);
     const rowNodes = Array.from(elements.eventsList.querySelectorAll('.event-row'));
@@ -88,7 +95,9 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       .map((node) => ({
         date: node.querySelector('[name="date"]').value,
         time: node.querySelector('[name="time"]').value,
-        type: node.querySelector('[name="type"]').value.trim()
+        type: node.querySelector('[name="type"]').value.trim(),
+        recurrence: node.querySelector('[name="recurrence"]').value || 'none',
+        until: node.querySelector('[name="until"]').value || ''
       }))
       .filter((row) => row.date && row.time && row.type);
 
@@ -112,7 +121,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     if (index >= 0) state.churches[index] = church;
     else state.churches.push(church);
 
-    saveChurches(state.churches);
+    await saveChurches(state.churches);
     state.filteredIds = null;
     renderMarkers();
     state.selectedChurchId = church.id;

@@ -2,32 +2,21 @@
 
 Web app to help youth and young adults in Montreal discover nearby churches and gatherings.
 
-## New file organization (React-style mindset, modular files)
+## Features (free-first MVP)
 
-The app is still a lightweight static frontend, but code is now split into focused modules so each file has one clear responsibility:
-
-- `src/main.js` — app bootstrap and wiring
-- `src/config.js` — app constants/keys/default map settings
-- `src/data/defaultChurches.js` — seed data
-- `src/i18n.js` — translations + language application
-- `src/services/storage.js` — localStorage read/write
-- `src/services/geocoding.js` — geocoding/reverse-geocoding API calls
-- `src/utils/distance.js` — distance calculation utility
-- `src/ui/mapView.js` — Leaflet map setup + marker rendering
-- `src/ui/detailsView.js` — church details rendering
-- `src/controllers/finderController.js` — address/radius search behavior
-- `src/controllers/adminController.js` — ADM editing workflow
-
-## Features
-
-- Landing section with mission/vision and Instagram call-to-action
-- Address + radius search to find nearby churches
-- Interactive Leaflet map (drag/swipe + pinch/scroll zoom)
-- Church details with upcoming 7-day gatherings and social links
-- Google Maps reference workflow: store a Google Maps pin URL and optional Google Place ID per church
-- ADM-only editing with map click capture + reverse geocoding
-- Multilingual interface with language selector
-- Data persisted in `localStorage`
+- Landing section with mission/vision and Instagram call-to-action.
+- Tabs for **Map**, **Calendar**, and **Contact us** sections.
+- Interactive Leaflet map (drag/swipe + pinch/scroll zoom).
+- Address + radius search to find nearby churches.
+- Calendar view with filters and recurring event support (weekly, bi-weekly, monthly, one-time).
+- Contact forms for:
+  - public suggestions / issue reports
+  - host registration requests
+- ADM editing with passcode gate, map-click coordinate capture, and recurring event entry.
+- Google Maps reference workflow: store Google Maps URL + optional Google Place ID per church.
+- Free data persistence strategy:
+  - localStorage fallback by default
+  - optional Google Sheets sync via Apps Script endpoint (set `SHEETS_WEB_APP_URL` in `src/config.js`).
 
 ## Run locally
 

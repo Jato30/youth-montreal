@@ -20,8 +20,8 @@ export const defaultChurches = [
     facebook: 'https://www.facebook.com/nouvelleviechurch/',
     whatsapp: '',
     events: [
-      { date: inDays(1), time: '19:00', type: 'Young Adults Prayer Night' },
-      { date: inDays(3), time: '18:30', type: 'Bible Study Group' }
+      { date: inDays(1), time: '19:00', type: 'Young Adults Prayer Night', recurrence: 'weekly', until: '' },
+      { date: inDays(3), time: '18:30', type: 'Bible Study Group', recurrence: 'biweekly', until: '' }
     ]
   },
   {
@@ -37,6 +37,6 @@ export const defaultChurches = [
     instagram: 'https://www.instagram.com/lachapelle.me/',
     facebook: 'https://www.facebook.com/lachapelleme/',
     whatsapp: '',
-    events: [{ date: inDays(2), time: '19:30', type: 'Youth Fellowship' }]
+    events: [{ date: inDays(2), time: '19:30', type: 'Youth Fellowship', recurrence: 'monthly', until: '' }]
   }
 ];
