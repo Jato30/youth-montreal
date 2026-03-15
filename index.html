@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Youth Montreal Church Finder</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand-block" aria-label="Youth Montreal identity mark">
+        <div class="brand-logo">YOUTH<br />MTL</div>
+        <div class="brand-cross" aria-hidden="true"></div>
+      </div>
+
+      <div class="header-controls">
+        <label class="language-picker">
+          <span data-i18n="language">Language</span>
+          <select id="language-select">
+            <option value="en">English</option>
+            <option value="fr-CA">Français (Canada)</option>
+            <option value="es-LA">Español (LatAm)</option>
+            <option value="it">Italiano</option>
+            <option value="pt-BR">Português (Brasil)</option>
+            <option value="ko">한국어</option>
+            <option value="zh">中文</option>
+            <option value="uk">Українська</option>
+            <option value="he">עברית</option>
+          </select>
+        </label>
+        <button id="toggle-admin" type="button" data-i18n="admMode">ADM Mode</button>
+      </div>
+    </header>
+
+    <section id="landing-section" class="landing view-section">
+      <div class="landing-copy">
+        <p class="eyebrow">YOUTH MTL</p>
+        <h1 data-i18n="heroTitle">Connecting young people to local churches across Montreal.</h1>
+        <p data-i18n="heroBody">
+          Our vision is to help every youth and young adult quickly find a nearby Bible study, prayer meeting, church service, or fellowship this week.
+        </p>
+        <p>
+          <a href="https://instagram.com" target="_blank" rel="noreferrer" data-i18n="instagramLink">Follow the movement on Instagram</a>
+        </p>
+      </div>
+
+      <form id="finder-form" class="finder-card">
+        <h2 data-i18n="findChurch">Find a church near you</h2>
+        <label>
+          <span data-i18n="addressSearch">Your address</span>
+          <input id="finder-address" name="address" placeholder="1234 Rue Sainte-Catherine O, Montreal" required />
+        </label>
+        <label>
+          <span data-i18n="radius">Radius</span>
+          <select id="finder-radius" name="radiusKm">
+            <option value="3">3 km</option>
+            <option value="5" selected>5 km</option>
+            <option value="10">10 km</option>
+            <option value="15">15 km</option>
+            <option value="25">25 km</option>
+          </select>
+        </label>
+        <div class="finder-actions">
+          <button type="submit" data-i18n="findWithinRadius">Find within radius</button>
+          <button id="open-map" type="button" class="secondary" data-i18n="openMap">Open map</button>
+        </div>
+        <p id="finder-status" class="help-text"></p>
+      </form>
+    </section>
+
+    <nav class="view-tabs" aria-label="Main sections">
+      <button class="tab-btn active" data-target="landing-section" type="button">Landing</button>
+      <button class="tab-btn" data-target="map-section" type="button">Map</button>
+      <button class="tab-btn" data-target="calendar-section" type="button">Calendar</button>
+      <button class="tab-btn" data-target="contact-section" type="button">Contact us</button>
+    </nav>
+
+    <main id="map-section" class="view-section hidden">
+      <div class="map-column">
+        <section id="map" aria-label="Community churches map in Montreal"></section>
+      </div>
+
+      <aside>
+        <h2 data-i18n="churchDetails">Church details</h2>
+        <p id="empty-state" data-i18n="emptyState">Click a marker on the map to view details.</p>
+        <div id="details" class="hidden"></div>
+
+        <section id="admin-panel" class="hidden">
+          <h3 id="admin-title" data-i18n="addUpdateChurch">Add / update church</h3>
+          <form id="church-form">
+            <input type="hidden" name="churchId" />
+            <label><span data-i18n="churchName">Church name</span><input name="name" required /></label>
+            <label><span data-i18n="address">Address</span><input name="address" /></label>
+            <label><span data-i18n="googleMapsPinUrl">Google Maps pin URL</span><input name="googleMapsUrl" placeholder="https://maps.google.com/..." /></label>
+            <label><span data-i18n="googlePlaceId">Google Place ID (optional)</span><input name="googlePlaceId" placeholder="ChIJ..." /></label>
+            <label><span data-i18n="latitude">Latitude</span><input type="number" step="any" name="lat" required /></label>
+            <label><span data-i18n="longitude">Longitude</span><input type="number" step="any" name="lng" required /></label>
+            <p class="help-text" data-i18n="mapClickHint">When editing, click the map to capture coordinates and address automatically.</p>
+            <button id="toggle-map-capture" type="button" data-i18n="startMapCapture">Enable map capture</button>
+            <label><span data-i18n="languagesSpoken">Languages spoken</span><input name="languages" placeholder="English, Français" /></label>
+            <label><span data-i18n="website">Website</span><input type="url" name="website" /></label>
+            <label><span data-i18n="instagram">Instagram</span><input type="url" name="instagram" /></label>
+            <label><span data-i18n="facebook">Facebook</span><input type="url" name="facebook" /></label>
+            <label><span data-i18n="whatsapp">WhatsApp</span><input type="url" name="whatsapp" /></label>
+
+            <fieldset>
+              <legend data-i18n="gatherings">Gatherings (next 7 days)</legend>
+              <div id="events-list"></div>
+              <button id="add-event" type="button" data-i18n="addGathering">+ Add gathering</button>
+            </fieldset>
+
+            <div class="admin-actions">
+              <button type="submit" data-i18n="saveChurch">Save church</button>
+              <button id="cancel-edit" type="button" class="secondary" data-i18n="cancelEdit">Cancel edit</button>
+            </div>
+          </form>
+        </section>
+      </aside>
+    </main>
+
+
+    <section id="calendar-section" class="view-section hidden">
+      <div class="calendar-layout">
+        <section class="calendar-filters">
+          <h2>Calendar view</h2>
+          <label><span>Search</span><input id="calendar-keyword" placeholder="Church, address, event type" /></label>
+          <label><span>Event type</span><input id="calendar-type" placeholder="Bible study, service..." /></label>
+          <label><span>Language</span><input id="calendar-language" placeholder="English, Français..." /></label>
+          <label><span>From</span><input id="calendar-from" type="date" /></label>
+          <label><span>To</span><input id="calendar-to" type="date" /></label>
+          <button id="calendar-apply" type="button">Apply filters</button>
+          <p id="calendar-count" class="help-text"></p>
+        </section>
+        <section id="calendar-list" class="calendar-list"></section>
+      </div>
+    </section>
+
+    <section id="contact-section" class="view-section hidden">
+      <div class="contact-layout">
+        <section>
+          <h2>Suggest a correction / missing data</h2>
+          <form id="suggestion-form">
+            <label><span>Your name</span><input name="name" required /></label>
+            <label><span>Email</span><input type="email" name="email" required /></label>
+            <label><span>Suggestion type</span>
+              <select name="type">
+                <option value="place">Place</option>
+                <option value="event">Event</option>
+                <option value="issue">Report issue</option>
+              </select>
+            </label>
+            <label><span>Message</span><textarea name="message" rows="4" required></textarea></label>
+            <button type="submit">Send suggestion</button>
+          </form>
+          <p id="suggestion-status" class="help-text"></p>
+        </section>
+
+        <section>
+          <h2>Request to register as a host</h2>
+          <form id="host-request-form">
+            <label><span>Organization / Church</span><input name="organization" required /></label>
+            <label><span>Contact person</span><input name="contact" required /></label>
+            <label><span>Email</span><input type="email" name="email" required /></label>
+            <label><span>Details</span><textarea name="details" rows="4" required></textarea></label>
+            <button type="submit">Submit host request</button>
+          </form>
+          <p id="host-request-status" class="help-text"></p>
+        </section>
+      </div>
+    </section>
+
+    <template id="event-template">
+      <div class="event-row">
+        <input type="date" name="date" required />
+        <input type="time" name="time" required />
+        <input type="text" name="type" placeholder="Bible study / Service" required />
+        <select name="recurrence">
+          <option value="none">One-time</option>
+          <option value="weekly">Weekly</option>
+          <option value="biweekly">Bi-weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+        <input type="date" name="until" title="Repeat until" />
+        <button type="button" class="remove-event">✕</button>
+      </div>
+    </template>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
