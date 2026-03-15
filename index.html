@@ -34,11 +34,14 @@
             <option value="he">עברית</option>
           </select>
         </label>
+        <button id="toggle-host" type="button" class="secondary" data-i18n="hostMode">I'm a host</button>
         <button id="toggle-admin" type="button" data-i18n="admMode">ADM Mode</button>
       </div>
     </header>
 
-    <section class="landing">
+    <p id="host-status" class="help-text top-status"></p>
+
+    <section id="landing-section" class="landing view-section">
       <div class="landing-copy">
         <p class="eyebrow">YOUTH MTL</p>
         <h1 data-i18n="heroTitle">Connecting young people to local churches across Montreal.</h1>
@@ -75,14 +78,34 @@
     </section>
 
     <nav class="view-tabs" aria-label="Main sections">
-      <button class="tab-btn active" data-target="map-section" type="button">Map</button>
-      <button class="tab-btn" data-target="calendar-section" type="button">Calendar</button>
-      <button class="tab-btn" data-target="contact-section" type="button">Contact us</button>
+      <button class="tab-btn active" data-target="landing-section" type="button" data-i18n="tabLanding">Landing</button>
+      <button class="tab-btn" data-target="map-section" type="button" data-i18n="tabMap">Map</button>
+      <button class="tab-btn" data-target="calendar-section" type="button" data-i18n="tabCalendar">Calendar</button>
+      <button class="tab-btn" data-target="contact-section" type="button" data-i18n="tabContact">Contact us</button>
     </nav>
 
-    <main id="map-section" class="view-section">
+    <main id="map-section" class="view-section hidden">
       <div class="map-column">
+        <section class="map-filters">
+          <label><span data-i18n="filterLanguage">Language</span><input id="map-filter-language" placeholder="English, Français..." /></label>
+          <label><span data-i18n="eventType">Event type</span><input id="map-filter-type" placeholder="Bible study, prayer..." /></label>
+          <label>
+            <span data-i18n="ageGroup">Age group</span>
+            <select id="map-filter-age">
+              <option value="" data-i18n="allAges">All</option>
+              <option value="teens" data-i18n="ageTeens">Teens</option>
+              <option value="young-adults" data-i18n="ageYoungAdults">Young adults</option>
+              <option value="all" data-i18n="ageMixed">Mixed</option>
+            </select>
+          </label>
+          <div class="finder-actions">
+            <button id="map-apply" type="button" data-i18n="applyFilters">Apply filters</button>
+            <button id="map-clear" type="button" class="secondary" data-i18n="clearFilters">Clear</button>
+          </div>
+          <p id="map-filter-status" class="help-text"></p>
+        </section>
         <section id="map" aria-label="Community churches map in Montreal"></section>
+        <button id="suggest-shortcut" class="suggest-shortcut" type="button" data-i18n="suggestChange">+ Suggest an update</button>
       </div>
 
       <aside>
@@ -92,6 +115,7 @@
 
         <section id="admin-panel" class="hidden">
           <h3 id="admin-title" data-i18n="addUpdateChurch">Add / update church</h3>
+          <p id="admin-status" class="help-text"></p>
           <form id="church-form">
             <input type="hidden" name="churchId" />
             <label><span data-i18n="churchName">Church name</span><input name="name" required /></label>
@@ -120,20 +144,58 @@
             </div>
           </form>
         </section>
+
+        <section id="admin-moderation" class="hidden moderation-panel">
+          <h3 data-i18n="moderationTitle">Moderation queue</h3>
+          <h4 data-i18n="pendingSuggestions">Pending suggestions</h4>
+          <div id="suggestions-queue"></div>
+          <h4 data-i18n="pendingHostRequests">Pending host requests</h4>
+          <div id="host-queue"></div>
+        </section>
+
+        <section id="church-manager" class="hidden moderation-panel">
+          <h3 data-i18n="manageChurches">Manage churches</h3>
+          <label>
+            <span data-i18n="searchChurches">Search churches</span>
+            <input id="church-manager-search" placeholder="Name, address, language" />
+          </label>
+          <div id="church-manager-list"></div>
+        </section>
       </aside>
     </main>
-
 
     <section id="calendar-section" class="view-section hidden">
       <div class="calendar-layout">
         <section class="calendar-filters">
-          <h2>Calendar view</h2>
-          <label><span>Search</span><input id="calendar-keyword" placeholder="Church, address, event type" /></label>
-          <label><span>Event type</span><input id="calendar-type" placeholder="Bible study, service..." /></label>
-          <label><span>Language</span><input id="calendar-language" placeholder="English, Français..." /></label>
-          <label><span>From</span><input id="calendar-from" type="date" /></label>
-          <label><span>To</span><input id="calendar-to" type="date" /></label>
-          <button id="calendar-apply" type="button">Apply filters</button>
+          <h2 data-i18n="calendarView">Calendar view</h2>
+          <label><span data-i18n="search">Search</span><input id="calendar-keyword" placeholder="Church, address, event type" /></label>
+          <label><span data-i18n="eventType">Event type</span><input id="calendar-type" placeholder="Bible study, service..." /></label>
+          <label><span data-i18n="language">Language</span><input id="calendar-language" placeholder="English, Français..." /></label>
+          <label>
+            <span data-i18n="ageGroup">Age group</span>
+            <select id="calendar-age">
+              <option value="" data-i18n="allAges">All</option>
+              <option value="teens" data-i18n="ageTeens">Teens</option>
+              <option value="young-adults" data-i18n="ageYoungAdults">Young adults</option>
+              <option value="all" data-i18n="ageMixed">Mixed</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="weekday">Weekday</span>
+            <select id="calendar-weekday">
+              <option value="" data-i18n="anyDay">Any day</option>
+              <option value="0" data-i18n="sun">Sunday</option>
+              <option value="1" data-i18n="mon">Monday</option>
+              <option value="2" data-i18n="tue">Tuesday</option>
+              <option value="3" data-i18n="wed">Wednesday</option>
+              <option value="4" data-i18n="thu">Thursday</option>
+              <option value="5" data-i18n="fri">Friday</option>
+              <option value="6" data-i18n="sat">Saturday</option>
+            </select>
+          </label>
+          <label><span data-i18n="from">From</span><input id="calendar-from" type="date" /></label>
+          <label><span data-i18n="to">To</span><input id="calendar-to" type="date" /></label>
+          <button id="calendar-apply" type="button" data-i18n="applyFilters">Apply filters</button>
           <p id="calendar-count" class="help-text"></p>
         </section>
         <section id="calendar-list" class="calendar-list"></section>
@@ -143,31 +205,32 @@
     <section id="contact-section" class="view-section hidden">
       <div class="contact-layout">
         <section>
-          <h2>Suggest a correction / missing data</h2>
+          <h2 data-i18n="suggestionTitle">Suggest a correction / missing data</h2>
           <form id="suggestion-form">
-            <label><span>Your name</span><input name="name" required /></label>
+            <label><span data-i18n="yourName">Your name</span><input name="name" required /></label>
             <label><span>Email</span><input type="email" name="email" required /></label>
-            <label><span>Suggestion type</span>
+            <label
+              ><span data-i18n="suggestionType">Suggestion type</span>
               <select name="type">
-                <option value="place">Place</option>
-                <option value="event">Event</option>
-                <option value="issue">Report issue</option>
+                <option value="place" data-i18n="place">Place</option>
+                <option value="event" data-i18n="event">Event</option>
+                <option value="issue" data-i18n="reportIssue">Report issue</option>
               </select>
             </label>
-            <label><span>Message</span><textarea name="message" rows="4" required></textarea></label>
-            <button type="submit">Send suggestion</button>
+            <label><span data-i18n="message">Message</span><textarea name="message" rows="4" required></textarea></label>
+            <button type="submit" data-i18n="sendSuggestion">Send suggestion</button>
           </form>
           <p id="suggestion-status" class="help-text"></p>
         </section>
 
         <section>
-          <h2>Request to register as a host</h2>
+          <h2 data-i18n="hostRequestTitle">Request to register as a host</h2>
           <form id="host-request-form">
-            <label><span>Organization / Church</span><input name="organization" required /></label>
-            <label><span>Contact person</span><input name="contact" required /></label>
+            <label><span data-i18n="organizationChurch">Organization / Church</span><input name="organization" required /></label>
+            <label><span data-i18n="contactPerson">Contact person</span><input name="contact" required /></label>
             <label><span>Email</span><input type="email" name="email" required /></label>
-            <label><span>Details</span><textarea name="details" rows="4" required></textarea></label>
-            <button type="submit">Submit host request</button>
+            <label><span data-i18n="details">Details</span><textarea name="details" rows="4" required></textarea></label>
+            <button type="submit" data-i18n="submitHostRequest">Submit host request</button>
           </form>
           <p id="host-request-status" class="help-text"></p>
         </section>
@@ -179,6 +242,11 @@
         <input type="date" name="date" required />
         <input type="time" name="time" required />
         <input type="text" name="type" placeholder="Bible study / Service" required />
+        <select name="ageGroup">
+          <option value="all">All ages</option>
+          <option value="teens">Teens</option>
+          <option value="young-adults">Young adults</option>
+        </select>
         <select name="recurrence">
           <option value="none">One-time</option>
           <option value="weekly">Weekly</option>

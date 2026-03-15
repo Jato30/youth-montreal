@@ -1,3 +1,5 @@
+import { t } from '../i18n.js';
+
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -12,6 +14,10 @@ function addMonths(date, months) {
 
 function normalizeDate(value) {
   return new Date(`${value}T00:00:00`);
+}
+
+function getWeekday(dateString) {
+  return new Date(`${dateString}T00:00:00`).getDay();
 }
 
 function expandEvent(event, rangeStart, rangeEnd, church) {
@@ -36,6 +42,7 @@ function expandEvent(event, rangeStart, rangeEnd, church) {
         churchName: church.name,
         churchAddress: church.address,
         type: event.type,
+        ageGroup: event.ageGroup || '',
         time: event.time,
         date: cursor.toISOString().slice(0, 10),
         recurrence
@@ -55,8 +62,10 @@ export function collectOccurrences(churches, rangeStart, rangeEnd) {
 
 export function renderCalendarList({ state, elements }) {
   const keyword = elements.calendarKeyword.value.trim().toLowerCase();
-  const type = elements.calendarType.value;
+  const type = elements.calendarType.value.trim().toLowerCase();
   const language = elements.calendarLanguage.value.trim().toLowerCase();
+  const ageGroup = elements.calendarAge?.value || '';
+  const weekday = elements.calendarWeekday?.value || '';
   const from = elements.calendarFrom.value || new Date().toISOString().slice(0, 10);
   const to = elements.calendarTo.value || addDays(new Date(), 30).toISOString().slice(0, 10);
 
@@ -69,25 +78,28 @@ export function renderCalendarList({ state, elements }) {
 
     const text = `${row.churchName} ${row.churchAddress || ''} ${row.type}`.toLowerCase();
     const byKeyword = !keyword || text.includes(keyword);
-    const byType = !type || row.type.toLowerCase().includes(type.toLowerCase());
+    const byType = !type || row.type.toLowerCase().includes(type);
     const byLanguage = !language || (church.languages || []).join(' ').toLowerCase().includes(language);
-    return byKeyword && byType && byLanguage;
+    const byAge = !ageGroup || (row.ageGroup || '').toLowerCase() === ageGroup.toLowerCase();
+    const byWeekday = !weekday || String(getWeekday(row.date)) === weekday;
+    return byKeyword && byType && byLanguage && byAge && byWeekday;
   });
 
-  elements.calendarCount.textContent = `${rows.length} event(s)`;
+  elements.calendarCount.textContent = `${rows.length} ${t(state, 'eventsFound')}`;
   elements.calendarList.innerHTML = rows.length
     ? rows
         .map(
           (row) => `
       <article class="calendar-item">
         <h4>${row.type}</h4>
-        <p><strong>${row.date}</strong> at ${row.time || '00:00'}</p>
+        <p><strong>${row.date}</strong> ${t(state, 'atLabel')} ${row.time || '00:00'}</p>
         <p>${row.churchName}</p>
         ${row.churchAddress ? `<p>${row.churchAddress}</p>` : ''}
-        ${row.recurrence && row.recurrence !== 'none' ? `<p>Repeats: ${row.recurrence}</p>` : ''}
+        ${row.ageGroup ? `<p>${t(state, 'ageGroup')}: ${row.ageGroup}</p>` : ''}
+        ${row.recurrence && row.recurrence !== 'none' ? `<p>${t(state, 'repeatsLabel')} ${row.recurrence}</p>` : ''}
       </article>
     `
         )
         .join('')
-    : '<p class="help-text">No events found for current filters.</p>';
+    : `<p class="help-text">${t(state, 'noEventsForFilters')}</p>`;
 }

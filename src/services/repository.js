@@ -23,6 +23,51 @@ async function remotePost(resource, payload) {
   return response.json();
 }
 
+function readLocalList(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalList(key, list) {
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function normalizeEntry(entry) {
+  return {
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    ...entry
+  };
+}
+
+async function loadList(resource, localKey) {
+  if (hasRemote()) {
+    try {
+      const data = await remoteGet(resource);
+      const list = Array.isArray(data?.[resource]) ? data[resource].map(normalizeEntry) : [];
+      writeLocalList(localKey, list);
+      return list;
+    } catch {
+      // fallback to local cache
+    }
+  }
+  return readLocalList(localKey).map(normalizeEntry);
+}
+
+async function saveList(resource, localKey, list) {
+  writeLocalList(localKey, list);
+  if (hasRemote()) {
+    try {
+      await remotePost(resource, list);
+    } catch {
+      // keep local even if remote fails
+    }
+  }
+}
+
 export async function loadChurches() {
   if (hasRemote()) {
     try {
@@ -49,42 +94,36 @@ export async function saveChurches(churches) {
   }
 }
 
-function readLocalList(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key) || '[]');
-  } catch {
-    return [];
-  }
+export async function loadSuggestions() {
+  return loadList('suggestions', SUGGESTIONS_KEY);
 }
 
-function writeLocalList(key, list) {
-  localStorage.setItem(key, JSON.stringify(list));
+export async function loadHostRequests() {
+  return loadList('hostRequests', HOST_REQUESTS_KEY);
 }
 
 export async function submitSuggestion(suggestion) {
-  const list = readLocalList(SUGGESTIONS_KEY);
-  list.push(suggestion);
-  writeLocalList(SUGGESTIONS_KEY, list);
-
-  if (hasRemote()) {
-    try {
-      await remotePost('suggestions', suggestion);
-    } catch {
-      // fallback local only
-    }
-  }
+  const list = await loadSuggestions();
+  list.push(normalizeEntry(suggestion));
+  await saveList('suggestions', SUGGESTIONS_KEY, list);
 }
 
 export async function submitHostRequest(request) {
-  const list = readLocalList(HOST_REQUESTS_KEY);
-  list.push(request);
-  writeLocalList(HOST_REQUESTS_KEY, list);
+  const list = await loadHostRequests();
+  list.push(normalizeEntry(request));
+  await saveList('hostRequests', HOST_REQUESTS_KEY, list);
+}
 
-  if (hasRemote()) {
-    try {
-      await remotePost('hostRequests', request);
-    } catch {
-      // fallback local only
-    }
-  }
+export async function updateSuggestionStatus(id, status) {
+  const list = await loadSuggestions();
+  const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
+  await saveList('suggestions', SUGGESTIONS_KEY, next);
+  return next;
+}
+
+export async function updateHostRequestStatus(id, status) {
+  const list = await loadHostRequests();
+  const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
+  await saveList('hostRequests', HOST_REQUESTS_KEY, next);
+  return next;
 }

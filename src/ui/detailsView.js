@@ -13,6 +13,8 @@ export function renderChurchDetails({ state, church, detailsElement, emptyStateE
     })
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
 
+  const canEdit = state.isAdminMode || (state.isHostMode && state.hostChurchId === church.id);
+
   detailsElement.innerHTML = `
     <article class="detail-card">
       <h3>${church.name}</h3>
@@ -27,7 +29,8 @@ export function renderChurchDetails({ state, church, detailsElement, emptyStateE
         ${church.facebook ? ` · <a href="${church.facebook}" target="_blank" rel="noreferrer">${t(state, 'facebook')}</a>` : ''}
         ${church.whatsapp ? ` · <a href="${church.whatsapp}" target="_blank" rel="noreferrer">${t(state, 'whatsapp')}</a>` : ''}
       </p>
-      ${state.isAdminMode ? `<button type="button" class="edit-pin-btn" data-id="${church.id}">${t(state, 'editPin')}</button>` : ''}
+      ${state.isAdminMode && church.hostPasscode ? `<p class="help-text"><strong>${t(state, 'hostPasscode')}:</strong> ${church.hostPasscode}</p>` : ''}
+      ${canEdit ? `<button type="button" class="edit-pin-btn" data-id="${church.id}">${t(state, 'editPin')}</button>` : ''}
     </article>
   `;
 

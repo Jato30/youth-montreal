@@ -5,14 +5,17 @@ Web app to help youth and young adults in Montreal discover nearby churches and 
 ## Features (free-first MVP)
 
 - Landing section with mission/vision and Instagram call-to-action.
-- Tabs for **Map**, **Calendar**, and **Contact us** sections.
+- Tabs for **Map**, **Calendar**, and **Contact us** sections (one section visible at a time).
 - Interactive Leaflet map (drag/swipe + pinch/scroll zoom).
 - Address + radius search to find nearby churches.
-- Calendar view with filters and recurring event support (weekly, bi-weekly, monthly, one-time).
+- Calendar view with advanced filters (language, event type, age group, weekday, date range) and recurring event support (weekly, bi-weekly, monthly, one-time).
 - Contact forms for:
   - public suggestions / issue reports
   - host registration requests
-- ADM editing with passcode gate, map-click coordinate capture, and recurring event entry.
+- Quick “Suggest an update” shortcut from the map view to improve feedback UX.
+- ADM editing with passcode gate, map-click coordinate capture, recurring event entry, moderation queue, and church management (search/edit/delete).
+- Host mode with host passcode so a church/organization can edit only its own location and events.
+- Map section filters (language, event type, age group) to quickly narrow visible churches.
 - Google Maps reference workflow: store Google Maps URL + optional Google Place ID per church.
 - Free data persistence strategy:
   - localStorage fallback by default

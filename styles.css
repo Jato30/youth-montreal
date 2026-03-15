@@ -147,6 +147,18 @@ main {
 
 .map-column { min-height: 0; }
 
+.map-filters {
+  background: var(--card);
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 0.9rem;
+  margin-bottom: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.6rem;
+}
+
+
 #map {
   border-radius: 1rem;
   overflow: hidden;
@@ -228,7 +240,7 @@ fieldset,
 
 .event-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.5fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr 1fr auto;
   gap: 0.4rem;
   margin-bottom: 0.45rem;
 }
@@ -244,4 +256,50 @@ fieldset,
   main { height: auto; }
 
   #map { height: 55vh; }
+}
+
+
+.top-status {
+  padding: 0 1.2rem;
+}
+
+.moderation-panel {
+  margin-top: 1rem;
+}
+
+.queue-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.7rem;
+  padding: 0.65rem;
+  margin-bottom: 0.55rem;
+}
+
+.queue-item p {
+  margin: 0 0 0.35rem;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.queue-actions button {
+  padding: 0.35rem 0.55rem;
+}
+
+
+.suggest-shortcut {
+  margin-top: 0.6rem;
+  width: 100%;
+}
+
+.manager-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.7rem;
+  padding: 0.65rem;
+  margin-top: 0.55rem;
+}
+
+.manager-item p {
+  margin: 0 0 0.35rem;
 }
