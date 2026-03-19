@@ -105,7 +105,6 @@
           <p id="map-filter-status" class="help-text"></p>
         </section>
         <section id="map" aria-label="Community churches map in Montreal"></section>
-        <button id="suggest-shortcut" class="suggest-shortcut" type="button" data-i18n="suggestChange">+ Suggest an update</button>
       </div>
 
       <aside>
@@ -161,6 +160,19 @@
           </label>
           <div id="church-manager-list"></div>
         </section>
+        <section id="hardening-panel" class="hidden moderation-panel">
+          <h3 data-i18n="hardeningTitle">Hardening tools</h3>
+          <div class="finder-actions">
+            <button id="export-data" type="button" data-i18n="exportBackup">Export backup</button>
+            <label class="file-input-label secondary">
+              <span data-i18n="importBackup">Import backup</span>
+              <input id="import-data" type="file" accept="application/json" hidden />
+            </label>
+          </div>
+          <h4 data-i18n="auditLogTitle">Audit log</h4>
+          <ul id="audit-log-list" class="audit-log-list"></ul>
+        </section>
+
       </aside>
     </main>
 
@@ -234,6 +246,26 @@
           </form>
           <p id="host-request-status" class="help-text"></p>
         </section>
+      </div>
+    </section>
+
+
+    <footer class="site-footer">
+      <button class="footer-link" type="button" data-target="privacy-section" data-i18n="privacyPage">Privacy</button>
+      <button class="footer-link" type="button" data-target="legal-section" data-i18n="legalPage">Legal</button>
+    </footer>
+
+    <section id="privacy-section" class="view-section hidden static-page">
+      <div class="static-card">
+        <h2 data-i18n="privacyPage">Privacy</h2>
+        <p data-i18n="privacyBody">This project stores venue, event, suggestion, and moderation data in your browser for now. Do not enter sensitive personal information.</p>
+      </div>
+    </section>
+
+    <section id="legal-section" class="view-section hidden static-page">
+      <div class="static-card">
+        <h2 data-i18n="legalPage">Legal</h2>
+        <p data-i18n="legalBody">Youth Montreal publishes community-submitted information that may be reviewed by administrators. Always verify event details with the host before attending.</p>
       </div>
     </section>
 

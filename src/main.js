@@ -1,5 +1,5 @@
-import { LANGUAGE_KEY } from './config.js';
-import { loadChurches, loadHostRequests, loadSuggestions, submitSuggestion, submitHostRequest } from './services/repository.js';
+import { LANGUAGE_KEY, STORAGE_KEY } from './config.js';
+import { appendAuditLog, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, submitSuggestion, submitHostRequest } from './services/repository.js';
 import { createMap, renderMarkers, resetMapView } from './ui/mapView.js';
 import { renderChurchDetails } from './ui/detailsView.js';
 import { attachAdminController } from './controllers/adminController.js';
@@ -54,13 +54,20 @@ const elements = {
   churchManager: document.querySelector('#church-manager'),
   churchManagerSearch: document.querySelector('#church-manager-search'),
   churchManagerList: document.querySelector('#church-manager-list'),
-  suggestShortcut: document.querySelector('#suggest-shortcut')
+  contactType: document.querySelector('#suggestion-form select[name="type"]'),
+  contactMessage: document.querySelector('#suggestion-form textarea[name="message"]'),
+  auditLogList: document.querySelector('#audit-log-list'),
+  exportDataButton: document.querySelector('#export-data'),
+  importDataInput: document.querySelector('#import-data'),
+  hardeningPanel: document.querySelector('#hardening-panel'),
+  legalButtons: Array.from(document.querySelectorAll('.footer-link'))
 };
 
 const state = {
   churches: [],
   suggestions: [],
   hostRequests: [],
+  auditLog: [],
   markers: new Map(),
   filteredIds: null,
   mapFilteredIds: null,
@@ -76,10 +83,28 @@ function switchSection(target) {
   elements.tabButtons.forEach((b) => b.classList.toggle('active', b.dataset.target === target));
   elements.sections.forEach((section) => section.classList.toggle('hidden', section.id !== target));
   if (target === 'map-section') map.invalidateSize();
-  if (target === 'calendar-section') renderCalendarList({ state, elements });
+  if (target === 'calendar-section') renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion });
 }
 
 const map = createMap();
+
+function openPlaceSuggestion(church) {
+  switchSection('contact-section');
+  if (elements.contactType) elements.contactType.value = 'place';
+  if (elements.contactMessage) {
+    elements.contactMessage.value = `Place update for ${church.name}\nAddress: ${church.address || ''}\nWhat should be changed?`;
+    elements.contactMessage.focus();
+  }
+}
+
+function openEventSuggestion(church, eventData) {
+  switchSection('contact-section');
+  if (elements.contactType) elements.contactType.value = 'event';
+  if (elements.contactMessage) {
+    elements.contactMessage.value = `Event update for ${church.name}\nEvent: ${eventData.type}\nDate: ${eventData.date} ${eventData.time || ''}\nWhat should be changed?`;
+    elements.contactMessage.focus();
+  }
+}
 
 const renderDetails = (church, onEdit) => {
   renderChurchDetails({
@@ -87,7 +112,9 @@ const renderDetails = (church, onEdit) => {
     church,
     detailsElement: elements.details,
     emptyStateElement: elements.emptyState,
-    onEdit
+    onEdit,
+    onSuggestPlaceUpdate: openPlaceSuggestion,
+    onSuggestEventUpdate: openEventSuggestion
   });
 };
 
@@ -105,6 +132,17 @@ const rerenderMarkers = () =>
     }
   });
 
+function renderAuditLog() {
+  if (!elements.auditLogList) return;
+  elements.auditLogList.innerHTML = state.auditLog.length
+    ? state.auditLog
+        .map(
+          (item) => `<li><strong>${item.action}</strong> — ${item.label || ''} <span class="help-text">${new Date(item.createdAt).toLocaleString('en-CA')}</span></li>`
+        )
+        .join('')
+    : `<li class="help-text">${t(state, 'noAuditLog')}</li>`;
+}
+
 function setupTabs() {
   elements.tabButtons.forEach((button) => {
     button.addEventListener('click', () => switchSection(button.dataset.target));
@@ -117,7 +155,7 @@ function setupCalendar() {
   in30.setDate(today.getDate() + 30);
   elements.calendarFrom.value = today.toISOString().slice(0, 10);
   elements.calendarTo.value = in30.toISOString().slice(0, 10);
-  elements.calendarApply.addEventListener('click', () => renderCalendarList({ state, elements }));
+  elements.calendarApply.addEventListener('click', () => renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion }));
 }
 
 function setupMapFilters() {
@@ -127,9 +165,7 @@ function setupMapFilters() {
     const ageGroup = elements.mapFilterAge.value;
 
     const byLanguage = !language || (church.languages || []).join(' ').toLowerCase().includes(language);
-    const byEventType =
-      !eventType ||
-      (church.events || []).some((event) => (event.type || '').toLowerCase().includes(eventType));
+    const byEventType = !eventType || (church.events || []).some((event) => (event.type || '').toLowerCase().includes(eventType));
     const byAge = !ageGroup || (church.events || []).some((event) => (event.ageGroup || 'all') === ageGroup);
 
     return byLanguage && byEventType && byAge;
@@ -159,8 +195,10 @@ function setupPublicForms() {
     const data = Object.fromEntries(new FormData(elements.suggestionForm).entries());
     await submitSuggestion({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
     state.suggestions = await loadSuggestions();
+    state.auditLog = await appendAuditLog({ action: 'suggestion_submitted', label: data.type || 'suggestion' });
     elements.suggestionForm.reset();
     elements.suggestionStatus.textContent = t(state, 'suggestionSubmitted');
+    renderAuditLog();
     if (state.isAdminMode) renderModerationQueues();
   });
 
@@ -169,9 +207,44 @@ function setupPublicForms() {
     const data = Object.fromEntries(new FormData(elements.hostRequestForm).entries());
     await submitHostRequest({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
     state.hostRequests = await loadHostRequests();
+    state.auditLog = await appendAuditLog({ action: 'host_request_submitted', label: data.organization || 'host request' });
     elements.hostRequestForm.reset();
     elements.hostRequestStatus.textContent = t(state, 'hostRequestSubmitted');
+    renderAuditLog();
     if (state.isAdminMode) renderModerationQueues();
+  });
+}
+
+function setupHardeningTools() {
+  elements.exportDataButton?.addEventListener('click', async () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      churches: state.churches,
+      suggestions: state.suggestions,
+      hostRequests: state.hostRequests,
+      auditLog: state.auditLog
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'youth-montreal-backup.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    state.auditLog = await appendAuditLog({ action: 'backup_exported', label: 'JSON export' });
+    renderAuditLog();
+  });
+
+  elements.importDataInput?.addEventListener('change', async () => {
+    const file = elements.importDataInput.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (Array.isArray(data.churches)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.churches));
+      state.auditLog = await appendAuditLog({ action: 'backup_imported', label: file.name });
+      location.reload();
+    }
   });
 }
 
@@ -179,6 +252,7 @@ async function init() {
   state.churches = await loadChurches();
   state.suggestions = await loadSuggestions();
   state.hostRequests = await loadHostRequests();
+  state.auditLog = await loadAuditLog();
 
   const adminController = attachAdminController({
     state,
@@ -209,10 +283,8 @@ async function init() {
   });
 
 
-  elements.suggestShortcut?.addEventListener('click', () => {
-    switchSection('contact-section');
-    elements.suggestionForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    elements.suggestionForm?.querySelector('input[name="name"]')?.focus();
+  elements.legalButtons?.forEach((button) => {
+    button.addEventListener('click', () => switchSection(button.dataset.target));
   });
 
   elements.languageSelect.value = TRANSLATIONS[state.language] ? state.language : 'en';
@@ -223,6 +295,7 @@ async function init() {
       if (church) renderDetails(church, startEditChurch);
       renderModerationQueues();
       renderChurchManager();
+      renderAuditLog();
     });
   });
 
@@ -230,14 +303,16 @@ async function init() {
   setupCalendar();
   setupMapFilters();
   setupPublicForms();
+  setupHardeningTools();
   switchSection('landing-section');
   rerenderMarkers();
-  renderCalendarList({ state, elements });
+  renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion });
   applyLanguage(state, elements, () => {
     const church = state.churches.find((item) => item.id === state.selectedChurchId);
     if (church) renderDetails(church, startEditChurch);
     renderModerationQueues();
     renderChurchManager();
+    renderAuditLog();
   });
 }
 

@@ -140,6 +140,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     elements.adminPanel.classList.remove('hidden');
     elements.adminModeration.classList.add('hidden');
     elements.churchManager.classList.add('hidden');
+    elements.hardeningPanel?.classList.add('hidden');
     elements.toggleAdmin.textContent = t(state, 'admMode');
     elements.toggleHost.textContent = t(state, 'leaveHostMode');
     startEditChurch(church.id);
@@ -184,6 +185,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     elements.adminPanel.classList.toggle('hidden', !state.isAdminMode);
     elements.adminModeration.classList.toggle('hidden', !state.isAdminMode);
     elements.churchManager.classList.toggle('hidden', !state.isAdminMode);
+    elements.hardeningPanel?.classList.toggle('hidden', !state.isAdminMode);
     elements.toggleAdmin.textContent = state.isAdminMode ? t(state, 'closeAdm') : t(state, 'admMode');
 
     if (state.isAdminMode) {

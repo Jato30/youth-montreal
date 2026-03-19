@@ -3,6 +3,7 @@ import { loadChurches as loadLocalChurches, saveChurches as saveLocalChurches } 
 
 const SUGGESTIONS_KEY = 'youth-montreal-suggestions';
 const HOST_REQUESTS_KEY = 'youth-montreal-host-requests';
+const AUDIT_LOG_KEY = 'youth-montreal-audit-log';
 
 const hasRemote = () => Boolean(SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim());
 
@@ -125,5 +126,16 @@ export async function updateHostRequestStatus(id, status) {
   const list = await loadHostRequests();
   const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
   await saveList('hostRequests', HOST_REQUESTS_KEY, next);
+  return next;
+}
+
+export async function loadAuditLog() {
+  return readLocalList(AUDIT_LOG_KEY);
+}
+
+export async function appendAuditLog(entry) {
+  const list = await loadAuditLog();
+  const next = [{ id: crypto.randomUUID(), createdAt: new Date().toISOString(), ...entry }, ...list].slice(0, 100);
+  writeLocalList(AUDIT_LOG_KEY, next);
   return next;
 }

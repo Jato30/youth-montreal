@@ -60,7 +60,7 @@ export function collectOccurrences(churches, rangeStart, rangeEnd) {
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
 }
 
-export function renderCalendarList({ state, elements }) {
+export function renderCalendarList({ state, elements, onSuggestEventUpdate }) {
   const keyword = elements.calendarKeyword.value.trim().toLowerCase();
   const type = elements.calendarType.value.trim().toLowerCase();
   const language = elements.calendarLanguage.value.trim().toLowerCase();
@@ -89,7 +89,7 @@ export function renderCalendarList({ state, elements }) {
   elements.calendarList.innerHTML = rows.length
     ? rows
         .map(
-          (row) => `
+          (row, index) => `
       <article class="calendar-item">
         <h4>${row.type}</h4>
         <p><strong>${row.date}</strong> ${t(state, 'atLabel')} ${row.time || '00:00'}</p>
@@ -97,9 +97,20 @@ export function renderCalendarList({ state, elements }) {
         ${row.churchAddress ? `<p>${row.churchAddress}</p>` : ''}
         ${row.ageGroup ? `<p>${t(state, 'ageGroup')}: ${row.ageGroup}</p>` : ''}
         ${row.recurrence && row.recurrence !== 'none' ? `<p>${t(state, 'repeatsLabel')} ${row.recurrence}</p>` : ''}
+        <button type="button" class="secondary calendar-suggest-btn" data-row-index="${index}">${t(state, 'suggestEventUpdate')}</button>
       </article>
     `
         )
         .join('')
     : `<p class="help-text">${t(state, 'noEventsForFilters')}</p>`;
+
+  elements.calendarList.querySelectorAll('.calendar-suggest-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const row = rows[Number(button.dataset.rowIndex)];
+      if (!row) return;
+      const church = state.churches.find((item) => item.id === row.churchId);
+      if (!church) return;
+      onSuggestEventUpdate?.(church, row);
+    });
+  });
 }

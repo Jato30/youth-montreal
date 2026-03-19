@@ -1,7 +1,7 @@
 import { t } from '../i18n.js';
 import { googlePlaceLink } from '../utils/googlePlace.js';
 
-export function renderChurchDetails({ state, church, detailsElement, emptyStateElement, onEdit }) {
+export function renderChurchDetails({ state, church, detailsElement, emptyStateElement, onEdit, onSuggestPlaceUpdate, onSuggestEventUpdate }) {
   const today = new Date();
   const cutoff = new Date();
   cutoff.setDate(today.getDate() + 7);
@@ -22,7 +22,12 @@ export function renderChurchDetails({ state, church, detailsElement, emptyStateE
       <p><a href="${googlePlaceLink(church)}" target="_blank" rel="noreferrer">${t(state, 'openMaps')}</a></p>
       ${church.googlePlaceId ? `<p><strong>${t(state, 'googlePlaceIdLabel')}</strong> ${church.googlePlaceId}</p>` : ''}
       ${church.languages?.length ? `<p><strong>${t(state, 'languagesLabel')}</strong> ${church.languages.join(', ')}</p>` : ''}
-      <ul>${upcoming.length ? upcoming.map((e) => `<li>${e.date} ${e.time} — ${e.type}</li>`).join('') : `<li>${t(state, 'noGatherings')}</li>`}</ul>
+      <div class="detail-actions-row">
+        <button type="button" class="suggest-place-btn secondary" data-id="${church.id}">${t(state, 'suggestPlaceUpdate')}</button>
+      </div>
+      <ul>
+        ${upcoming.length ? upcoming.map((e, index) => `<li>${e.date} ${e.time} — ${e.type} <button type="button" class="inline-action suggest-event-btn" data-event-index="${index}">${t(state, 'suggestEventUpdate')}</button></li>`).join('') : `<li>${t(state, 'noGatherings')}</li>`}
+      </ul>
       <p>
         ${church.website ? `<a href="${church.website}" target="_blank" rel="noreferrer">${t(state, 'website')}</a>` : ''}
         ${church.instagram ? ` · <a href="${church.instagram}" target="_blank" rel="noreferrer">${t(state, 'instagram')}</a>` : ''}
@@ -35,6 +40,14 @@ export function renderChurchDetails({ state, church, detailsElement, emptyStateE
   `;
 
   detailsElement.querySelector('.edit-pin-btn')?.addEventListener('click', () => onEdit(church.id));
+  detailsElement.querySelector('.suggest-place-btn')?.addEventListener('click', () => onSuggestPlaceUpdate?.(church));
+  detailsElement.querySelectorAll('.suggest-event-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const eventIndex = Number(button.dataset.eventIndex);
+      const event = upcoming[eventIndex];
+      if (event) onSuggestEventUpdate?.(church, event);
+    });
+  });
   detailsElement.classList.remove('hidden');
   emptyStateElement.classList.add('hidden');
 }

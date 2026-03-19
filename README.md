@@ -12,7 +12,7 @@ Web app to help youth and young adults in Montreal discover nearby churches and 
 - Contact forms for:
   - public suggestions / issue reports
   - host registration requests
-- Quick “Suggest an update” shortcut from the map view to improve feedback UX.
+- Contextual suggestion actions for selected places/events so users can report updates on the exact venue or calendar item they are viewing.
 - ADM editing with passcode gate, map-click coordinate capture, recurring event entry, moderation queue, and church management (search/edit/delete).
 - Host mode with host passcode so a church/organization can edit only its own location and events.
 - Map section filters (language, event type, age group) to quickly narrow visible churches.
@@ -20,6 +20,7 @@ Web app to help youth and young adults in Montreal discover nearby churches and 
 - Free data persistence strategy:
   - localStorage fallback by default
   - optional Google Sheets sync via Apps Script endpoint (set `SHEETS_WEB_APP_URL` in `src/config.js`).
+- Phase 5 hardening additions: privacy/legal pages, ADM JSON export/import backup tools, and a lightweight audit log.
 
 ## Run locally
 

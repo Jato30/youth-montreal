@@ -303,3 +303,60 @@ fieldset,
 .manager-item p {
   margin: 0 0 0.35rem;
 }
+
+
+.detail-actions-row {
+  margin: 0.75rem 0;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.inline-action {
+  margin-left: 0.4rem;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.8rem;
+}
+
+.site-footer {
+  padding: 0 1.2rem 1.2rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.static-page {
+  padding: 0 1.2rem 1.2rem;
+}
+
+.static-card {
+  background: var(--card);
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.audit-log-list {
+  padding-left: 1.2rem;
+}
+
+.audit-log-list li {
+  margin-bottom: 0.45rem;
+}
+
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  font-weight: 700;
+  color: #fff;
+}
