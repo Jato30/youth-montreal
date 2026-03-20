@@ -31,6 +31,6 @@ export function attachFinderController({ state, map, elements, renderMarkers, re
       renderChurchDetails(matches[0]);
     }
 
-    document.querySelector('#map-section').scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('#find-church')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }

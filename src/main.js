@@ -1,5 +1,5 @@
 import { LANGUAGE_KEY, STORAGE_KEY } from './config.js';
-import { appendAuditLog, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, submitSuggestion, submitHostRequest } from './services/repository.js';
+import { appendAuditLog, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, submitHostRequest, submitSuggestion } from './services/repository.js';
 import { createMap, renderMarkers, resetMapView } from './ui/mapView.js';
 import { renderChurchDetails } from './ui/detailsView.js';
 import { attachAdminController } from './controllers/adminController.js';
@@ -14,12 +14,10 @@ const elements = {
   adminPanel: document.querySelector('#admin-panel'),
   adminTitle: document.querySelector('#admin-title'),
   adminStatus: document.querySelector('#admin-status'),
-  adminModeration: document.querySelector('#admin-moderation'),
   suggestionsQueue: document.querySelector('#suggestions-queue'),
   hostQueue: document.querySelector('#host-queue'),
   toggleAdmin: document.querySelector('#toggle-admin'),
   toggleHost: document.querySelector('#toggle-host'),
-  hostStatus: document.querySelector('#host-status'),
   churchForm: document.querySelector('#church-form'),
   eventsList: document.querySelector('#events-list'),
   eventTemplate: document.querySelector('#event-template'),
@@ -28,39 +26,51 @@ const elements = {
   toggleMapCapture: document.querySelector('#toggle-map-capture'),
   languageSelect: document.querySelector('#language-select'),
   finderForm: document.querySelector('#finder-form'),
-  openMapButton: document.querySelector('#open-map'),
+  finderAddress: document.querySelector('#finder-address'),
   mapFilterLanguage: document.querySelector('#map-filter-language'),
   mapFilterType: document.querySelector('#map-filter-type'),
   mapFilterAge: document.querySelector('#map-filter-age'),
   mapApply: document.querySelector('#map-apply'),
   mapClear: document.querySelector('#map-clear'),
   mapFilterStatus: document.querySelector('#map-filter-status'),
-  tabButtons: Array.from(document.querySelectorAll('.tab-btn')),
-  sections: Array.from(document.querySelectorAll('.view-section')),
   calendarKeyword: document.querySelector('#calendar-keyword'),
   calendarType: document.querySelector('#calendar-type'),
   calendarLanguage: document.querySelector('#calendar-language'),
   calendarAge: document.querySelector('#calendar-age'),
-  calendarWeekday: document.querySelector('#calendar-weekday'),
   calendarFrom: document.querySelector('#calendar-from'),
   calendarTo: document.querySelector('#calendar-to'),
   calendarApply: document.querySelector('#calendar-apply'),
   calendarList: document.querySelector('#calendar-list'),
   calendarCount: document.querySelector('#calendar-count'),
-  suggestionForm: document.querySelector('#suggestion-form'),
-  suggestionStatus: document.querySelector('#suggestion-status'),
+  calendarModeButtons: Array.from(document.querySelectorAll('[data-calendar-mode]')),
+  contactForm: document.querySelector('#contact-form'),
+  contactStatus: document.querySelector('#contact-status'),
   hostRequestForm: document.querySelector('#host-request-form'),
   hostRequestStatus: document.querySelector('#host-request-status'),
-  churchManager: document.querySelector('#church-manager'),
+  hostRequestPanel: document.querySelector('#host-request-panel'),
+  toggleHostRequest: document.querySelector('#toggle-host-request'),
   churchManagerSearch: document.querySelector('#church-manager-search'),
   churchManagerList: document.querySelector('#church-manager-list'),
-  contactType: document.querySelector('#suggestion-form select[name="type"]'),
-  contactMessage: document.querySelector('#suggestion-form textarea[name="message"]'),
+  eventManagerSearch: document.querySelector('#event-manager-search'),
+  eventManagerList: document.querySelector('#event-manager-list'),
+  workspaceModeration: document.querySelector('#workspace-moderation'),
+  moderationTabs: document.querySelector('#moderation-tabs'),
+  moderationTabButtons: Array.from(document.querySelectorAll('[data-moderation-view]')),
+  workspaceViewButtons: Array.from(document.querySelectorAll('[data-workspace-view]')),
+  workspacePlacesView: document.querySelector('#workspace-places-view'),
+  workspaceEventsView: document.querySelector('#workspace-events-view'),
+  myChurchSection: document.querySelector('#my-church'),
+  workspaceStatus: document.querySelector('#workspace-status'),
   auditLogList: document.querySelector('#audit-log-list'),
   exportDataButton: document.querySelector('#export-data'),
   importDataInput: document.querySelector('#import-data'),
   hardeningPanel: document.querySelector('#hardening-panel'),
-  legalButtons: Array.from(document.querySelectorAll('.footer-link'))
+  legalButtons: Array.from(document.querySelectorAll('.footer-link')),
+  staticPages: Array.from(document.querySelectorAll('.static-page')),
+  mapViewPanel: document.querySelector('#map-view-panel'),
+  calendarViewPanel: document.querySelector('#calendar-view-panel'),
+  findViewButtons: Array.from(document.querySelectorAll('[data-find-view]')),
+  calendarModeToggle: document.querySelector('#calendar-mode-toggle')
 };
 
 const state = {
@@ -79,30 +89,48 @@ const state = {
   hostChurchId: null
 };
 
-function switchSection(target) {
-  elements.tabButtons.forEach((b) => b.classList.toggle('active', b.dataset.target === target));
-  elements.sections.forEach((section) => section.classList.toggle('hidden', section.id !== target));
-  if (target === 'map-section') map.invalidateSize();
-  if (target === 'calendar-section') renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion });
-}
-
 const map = createMap();
 
+function scrollToSection(targetId) {
+  document.querySelector(`#${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showFindView(mode) {
+  const showMap = mode === 'map';
+  elements.findViewButtons.forEach((button) => button.classList.toggle('active', button.dataset.findView === mode));
+  elements.mapViewPanel.classList.toggle('hidden', !showMap);
+  elements.calendarViewPanel.classList.toggle('hidden', showMap);
+  elements.calendarModeToggle.classList.toggle('hidden', showMap);
+  elements.staticPages.forEach((page) => page.classList.add('hidden'));
+  if (showMap) {
+    map.invalidateSize();
+  } else {
+    renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion });
+  }
+}
+
+function showStaticPage(targetId) {
+  elements.staticPages.forEach((page) => page.classList.toggle('hidden', page.id !== targetId));
+  scrollToSection(targetId);
+}
+
 function openPlaceSuggestion(church) {
-  switchSection('contact-section');
-  if (elements.contactType) elements.contactType.value = 'place';
-  if (elements.contactMessage) {
-    elements.contactMessage.value = `Place update for ${church.name}\nAddress: ${church.address || ''}\nWhat should be changed?`;
-    elements.contactMessage.focus();
+  scrollToSection('contact-us');
+  if (elements.hostRequestPanel) elements.hostRequestPanel.classList.add('hidden');
+  if (elements.contactForm) {
+    elements.contactForm.elements.subject.value = `Place update for ${church.name}`;
+    elements.contactForm.elements.message.value = `Address: ${church.address || ''}\nWhat should be changed?`;
+    elements.contactForm.elements.message.focus();
   }
 }
 
 function openEventSuggestion(church, eventData) {
-  switchSection('contact-section');
-  if (elements.contactType) elements.contactType.value = 'event';
-  if (elements.contactMessage) {
-    elements.contactMessage.value = `Event update for ${church.name}\nEvent: ${eventData.type}\nDate: ${eventData.date} ${eventData.time || ''}\nWhat should be changed?`;
-    elements.contactMessage.focus();
+  scrollToSection('contact-us');
+  if (elements.hostRequestPanel) elements.hostRequestPanel.classList.add('hidden');
+  if (elements.contactForm) {
+    elements.contactForm.elements.subject.value = `Event update for ${church.name}`;
+    elements.contactForm.elements.message.value = `Event: ${eventData.type}\nDate: ${eventData.date} ${eventData.time || ''}\nWhat should be changed?`;
+    elements.contactForm.elements.message.focus();
   }
 }
 
@@ -119,7 +147,7 @@ const renderDetails = (church, onEdit) => {
 };
 
 let startEditChurch = () => {};
-let renderModerationQueues = () => {};
+let renderModeration = () => {};
 let renderChurchManager = () => {};
 
 const rerenderMarkers = () =>
@@ -143,12 +171,6 @@ function renderAuditLog() {
     : `<li class="help-text">${t(state, 'noAuditLog')}</li>`;
 }
 
-function setupTabs() {
-  elements.tabButtons.forEach((button) => {
-    button.addEventListener('click', () => switchSection(button.dataset.target));
-  });
-}
-
 function setupCalendar() {
   const today = new Date();
   const in30 = new Date();
@@ -156,6 +178,14 @@ function setupCalendar() {
   elements.calendarFrom.value = today.toISOString().slice(0, 10);
   elements.calendarTo.value = in30.toISOString().slice(0, 10);
   elements.calendarApply.addEventListener('click', () => renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion }));
+  elements.calendarModeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      elements.calendarModeButtons.forEach((item) => item.classList.toggle('active', item === button));
+      elements.calendarMode = { value: button.dataset.calendarMode };
+      renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion });
+    });
+  });
+  elements.calendarMode = { value: 'daily' };
 }
 
 function setupMapFilters() {
@@ -190,16 +220,23 @@ function setupMapFilters() {
 }
 
 function setupPublicForms() {
-  elements.suggestionForm.addEventListener('submit', async (event) => {
+  elements.contactForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const data = Object.fromEntries(new FormData(elements.suggestionForm).entries());
-    await submitSuggestion({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
+    const data = Object.fromEntries(new FormData(elements.contactForm).entries());
+    await submitSuggestion({ id: crypto.randomUUID(), type: 'contact', ...data, createdAt: new Date().toISOString() });
     state.suggestions = await loadSuggestions();
-    state.auditLog = await appendAuditLog({ action: 'suggestion_submitted', label: data.type || 'suggestion' });
-    elements.suggestionForm.reset();
-    elements.suggestionStatus.textContent = t(state, 'suggestionSubmitted');
+    state.auditLog = await appendAuditLog({ action: 'suggestion_submitted', label: data.subject || 'contact' });
+    elements.contactForm.reset();
+    elements.contactStatus.textContent = t(state, 'suggestionSubmitted');
     renderAuditLog();
-    if (state.isAdminMode) renderModerationQueues();
+    if (state.isAdminMode || state.isHostMode) renderModeration();
+  });
+
+  elements.toggleHostRequest?.addEventListener('click', () => {
+    elements.hostRequestPanel.classList.toggle('hidden');
+    if (!elements.hostRequestPanel.classList.contains('hidden')) {
+      elements.hostRequestForm.elements.fullName.focus();
+    }
   });
 
   elements.hostRequestForm.addEventListener('submit', async (event) => {
@@ -207,11 +244,11 @@ function setupPublicForms() {
     const data = Object.fromEntries(new FormData(elements.hostRequestForm).entries());
     await submitHostRequest({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
     state.hostRequests = await loadHostRequests();
-    state.auditLog = await appendAuditLog({ action: 'host_request_submitted', label: data.organization || 'host request' });
+    state.auditLog = await appendAuditLog({ action: 'host_request_submitted', label: data.churchName || 'host request' });
     elements.hostRequestForm.reset();
     elements.hostRequestStatus.textContent = t(state, 'hostRequestSubmitted');
     renderAuditLog();
-    if (state.isAdminMode) renderModerationQueues();
+    if (state.isAdminMode) renderModeration();
   });
 }
 
@@ -248,6 +285,16 @@ function setupHardeningTools() {
   });
 }
 
+function setupNavigation() {
+  elements.findViewButtons.forEach((button) => {
+    button.addEventListener('click', () => showFindView(button.dataset.findView));
+  });
+
+  elements.legalButtons.forEach((button) => {
+    button.addEventListener('click', () => showStaticPage(button.dataset.target));
+  });
+}
+
 async function init() {
   state.churches = await loadChurches();
   state.suggestions = await loadSuggestions();
@@ -262,7 +309,7 @@ async function init() {
     renderChurchDetails: (church, onEdit) => renderDetails(church, onEdit)
   });
   startEditChurch = adminController.startEditChurch;
-  renderModerationQueues = adminController.renderModerationQueues;
+  renderModeration = adminController.renderModeration;
   renderChurchManager = adminController.renderChurchManager;
 
   attachFinderController({
@@ -273,47 +320,35 @@ async function init() {
     renderChurchDetails: (church) => renderDetails(church, startEditChurch)
   });
 
-  elements.openMapButton.addEventListener('click', () => {
-    state.filteredIds = null;
-    state.mapFilteredIds = null;
-    rerenderMarkers();
-    resetMapView(map);
-    switchSection('map-section');
-    document.querySelector('#map-section').scrollIntoView({ behavior: 'smooth' });
-  });
-
-
-  elements.legalButtons?.forEach((button) => {
-    button.addEventListener('click', () => switchSection(button.dataset.target));
-  });
-
   elements.languageSelect.value = TRANSLATIONS[state.language] ? state.language : 'en';
   elements.languageSelect.addEventListener('change', () => {
     state.language = elements.languageSelect.value;
     applyLanguage(state, elements, () => {
       const church = state.churches.find((item) => item.id === state.selectedChurchId);
       if (church) renderDetails(church, startEditChurch);
-      renderModerationQueues();
+      renderModeration();
       renderChurchManager();
       renderAuditLog();
     });
   });
 
-  setupTabs();
+  setupNavigation();
   setupCalendar();
   setupMapFilters();
   setupPublicForms();
   setupHardeningTools();
-  switchSection('landing-section');
+  showFindView('map');
   rerenderMarkers();
   renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion });
+  renderAuditLog();
   applyLanguage(state, elements, () => {
     const church = state.churches.find((item) => item.id === state.selectedChurchId);
     if (church) renderDetails(church, startEditChurch);
-    renderModerationQueues();
+    renderModeration();
     renderChurchManager();
     renderAuditLog();
   });
+  resetMapView(map);
 }
 
 init();
