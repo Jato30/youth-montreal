@@ -140,7 +140,7 @@ export const TRANSLATIONS = {
     dailyView: 'Daily',
     weeklyView: 'Weekly',
     monthlyView: 'Monthly',
-    contactEyebrow: 'Let's talk',
+    contactEyebrow: "Let's talk",
     contactTitle: 'Contact us',
     fullName: 'Full name',
     phoneNumber: 'Phone number',
