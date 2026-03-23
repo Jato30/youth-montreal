@@ -98,6 +98,7 @@ const state = {
   editorMode: 'church',
   editingEventIndex: null,
   lastFinderPoint: null,
+  onMapChurchSelect: null,
   isAdminMode: false,
   isHostMode: false,
   hostChurchId: null
@@ -189,6 +190,10 @@ const rerenderMarkers = () =>
     map,
     state,
     onSelectChurch: (church) => {
+      if (typeof state.onMapChurchSelect === 'function') {
+        state.onMapChurchSelect(church);
+        return;
+      }
       state.selectedChurchId = church.id;
       renderDetails(church, startEditChurch);
     }

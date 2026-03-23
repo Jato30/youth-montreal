@@ -36,6 +36,7 @@ function expandEvent(event, rangeStart, rangeEnd, church, eventIndex) {
         churchId: church.id,
         churchName: church.name,
         churchAddress: church.address,
+        title: event.title || event.type,
         type: event.type,
         ageGroup: event.ageGroup || '',
         time: event.time,
@@ -79,7 +80,8 @@ function renderActionButtons(rowIndex, state, row) {
 function renderDailyList(rows, state) {
   return rows.map((row, index) => `
     <article class="calendar-item">
-      <h4>${row.type}</h4>
+      <h4>${row.title || row.type}</h4>
+      <p>${row.type}</p>
       <p><strong>${row.date}</strong> ${t(state, 'atLabel')} ${row.time || '00:00'}</p>
       <p>${row.churchName}</p>
       ${row.churchAddress ? `<p>${shortenAddress(row.churchAddress)}</p>` : ''}
@@ -108,7 +110,8 @@ function renderGrid(days, rows, state, compactMonth = false) {
                     return `
                       <article class="calendar-badge" data-row-index="${index}">
                         <strong>${row.time || '00:00'}</strong>
-                        <span>${row.type}</span>
+                        <span>${row.title || row.type}</span>
+                        <small>${row.type}</small>
                         <em>${row.churchName}</em>
                       </article>
                       ${canManage(state, row.churchId) ? `
@@ -147,7 +150,7 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
   const rows = collectOccurrences(state.churches, rangeStart, rangeEnd).filter((row) => {
     const church = state.churches.find((item) => item.id === row.churchId);
     if (!church) return false;
-    const text = `${row.churchName} ${row.churchAddress || ''} ${row.type}`.toLowerCase();
+    const text = `${row.churchName} ${row.churchAddress || ''} ${row.title || ''} ${row.type}`.toLowerCase();
     const byKeyword = !keyword || text.includes(keyword);
     const byType = !type || row.type.toLowerCase().includes(type);
     const byLanguage = !language || (church.languages || []).join(' ').toLowerCase().includes(language);

@@ -14,6 +14,7 @@ export function loadChurches() {
       languages: church.languages || [],
       events: (church.events || []).map((event) => ({
         ...event,
+        title: event.title || event.type || '',
         ageGroup: event.ageGroup || 'all',
         recurrence: event.recurrence || 'none',
         until: event.until || ''

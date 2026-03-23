@@ -21,8 +21,8 @@ export const defaultChurches = [
     facebook: 'https://www.facebook.com/nouvelleviechurch/',
     whatsapp: '',
     events: [
-      { date: inDays(1), time: '19:00', type: 'Young Adults Prayer Night', ageGroup: 'young-adults', recurrence: 'weekly', until: '' },
-      { date: inDays(3), time: '18:30', type: 'Bible Study Group', ageGroup: 'all', recurrence: 'biweekly', until: '' }
+      { title: 'Young Adults Prayer Night', date: inDays(1), time: '19:00', type: 'Prayer, Fellowship', ageGroup: 'young-adults', recurrence: 'weekly', until: '' },
+      { title: 'Bible Study Group', date: inDays(3), time: '18:30', type: 'Bible study', ageGroup: 'all', recurrence: 'biweekly', until: '' }
     ]
   },
   {
@@ -39,6 +39,6 @@ export const defaultChurches = [
     instagram: 'https://www.instagram.com/lachapelle.me/',
     facebook: 'https://www.facebook.com/lachapelleme/',
     whatsapp: '',
-    events: [{ date: inDays(2), time: '19:30', type: 'Youth Fellowship', ageGroup: 'teens', recurrence: 'monthly', until: '' }]
+    events: [{ title: 'Youth Fellowship', date: inDays(2), time: '19:30', type: 'Fellowship', ageGroup: 'teens', recurrence: 'monthly', until: '' }]
   }
 ];

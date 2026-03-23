@@ -935,3 +935,68 @@ body.editing-mode #admin-panel {
     margin-left: 0;
   }
 }
+
+.event-host-fields {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.checkbox-select-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.checkbox-group-list {
+  grid-template-columns: 1fr;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.checkbox-group-list label {
+  justify-content: flex-start;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.checkbox-group-list input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
+.checkbox-summary {
+  margin-top: -0.1rem;
+}
+
+.detail-actions-row-single {
+  align-items: center;
+}
+
+.issue-report-btn {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: #8a2330;
+  background: rgba(255, 240, 241, 0.95);
+  border-color: rgba(138, 35, 48, 0.18);
+}
+
+.issue-report-btn:hover {
+  background: rgba(255, 230, 233, 1);
+}
+
+.church-form-new-event-mode .church-fields,
+.church-form-new-event-mode [data-i18n="editingFocusHint"] {
+  display: none;
+}
+
+.church-form-new-event-mode .event-host-fields {
+  display: grid !important;
+}

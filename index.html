@@ -120,6 +120,13 @@
                   <form id="church-form">
                     <input type="hidden" name="churchId" />
                     <input type="hidden" name="eventIndex" />
+                    <div class="event-host-fields hidden">
+                      <label>
+                        <span data-i18n="churchName">Church name</span>
+                        <input name="hostChurchName" list="saved-churches" autocomplete="organization" />
+                      </label>
+                      <p id="event-host-summary" class="help-text"></p>
+                    </div>
                     <div class="church-fields">
                       <label><span data-i18n="churchName">Church name</span><input name="name" required /></label>
                       <label>
@@ -403,19 +410,23 @@
           <strong data-i18n="event">Event</strong>
           <button type="button" class="remove-event" aria-label="Remove event">✕</button>
         </div>
+        <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
         <div class="editor-field-grid">
           <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
           <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
         </div>
-        <fieldset class="checkbox-group">
-          <legend data-i18n="eventType">Event type</legend>
-          <label><input type="checkbox" name="type" value="Bible study" /> <span data-i18n="eventBibleStudy">Bible study</span></label>
-          <label><input type="checkbox" name="type" value="Church service" /> <span data-i18n="eventChurchService">Church service</span></label>
-          <label><input type="checkbox" name="type" value="Fellowship" /> <span data-i18n="eventFellowship">Fellowship</span></label>
-          <label><input type="checkbox" name="type" value="Worship" /> <span data-i18n="eventWorship">Worship</span></label>
-          <label><input type="checkbox" name="type" value="Prayer" /> <span data-i18n="eventPrayer">Prayer</span></label>
-          <label><input type="checkbox" name="type" value="Community work" /> <span data-i18n="eventCommunityWork">Community work</span></label>
-        </fieldset>
+        <div class="checkbox-select-list">
+          <span class="field-label" data-i18n="eventType">Event type</span>
+          <fieldset class="checkbox-group checkbox-group-list">
+            <label><input type="checkbox" name="type" value="Bible study" /> <span data-i18n="eventBibleStudy">Bible study</span></label>
+            <label><input type="checkbox" name="type" value="Church service" /> <span data-i18n="eventChurchService">Church service</span></label>
+            <label><input type="checkbox" name="type" value="Fellowship" /> <span data-i18n="eventFellowship">Fellowship</span></label>
+            <label><input type="checkbox" name="type" value="Worship" /> <span data-i18n="eventWorship">Worship</span></label>
+            <label><input type="checkbox" name="type" value="Prayer" /> <span data-i18n="eventPrayer">Prayer</span></label>
+            <label><input type="checkbox" name="type" value="Community work" /> <span data-i18n="eventCommunityWork">Community work</span></label>
+          </fieldset>
+          <p class="checkbox-summary help-text"></p>
+        </div>
         <div class="editor-field-grid">
           <label>
             <span data-i18n="ageGroup">Age group</span>
@@ -437,6 +448,8 @@
         </div>
       </div>
     </template>
+
+    <datalist id="saved-churches"></datalist>
 
     <datalist id="available-languages">
       <option value="English"></option>
