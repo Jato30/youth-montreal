@@ -3,17 +3,33 @@ import { haversineKm } from '../utils/distance.js';
 import { t } from '../i18n.js';
 
 export function attachFinderController({ state, map, elements, renderMarkers, renderChurchDetails }) {
-  elements.finderForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  const addressList = document.querySelector('#montreal-addresses');
+
+  const applyLocationFilter = async ({ shouldGeocode = true } = {}) => {
     const address = elements.finderForm.elements.address.value.trim();
     const radiusKm = Number(elements.finderForm.elements.radiusKm.value);
-    if (!address) return;
 
-    elements.finderStatus.textContent = t(state, 'searchLoading');
-    const point = await geocodeAddress(address);
-    if (!point) {
-      elements.finderStatus.textContent = t(state, 'searchNoResults');
-      return;
+    if (!address) {
+      state.filteredIds = null;
+      elements.finderStatus.textContent = '';
+      renderMarkers();
+      return null;
+    }
+
+    let point = state.lastFinderPoint;
+    if (shouldGeocode || !point || point.query !== address) {
+      elements.finderStatus.textContent = t(state, 'searchLoading');
+      const match = await geocodeAddress(address);
+      if (!match) {
+        state.filteredIds = null;
+        state.lastFinderPoint = null;
+        elements.finderStatus.textContent = t(state, 'searchNoResults');
+        renderMarkers();
+        return null;
+      }
+      point = { ...match, query: match.fullAddress };
+      state.lastFinderPoint = point;
+      elements.finderForm.elements.address.value = match.fullAddress;
     }
 
     const matches = state.churches.filter((church) => haversineKm(point.lat, point.lng, Number(church.lat), Number(church.lng)) <= radiusKm);
@@ -23,14 +39,45 @@ export function attachFinderController({ state, map, elements, renderMarkers, re
     if (!matches.length) {
       elements.finderStatus.textContent = t(state, 'searchNoResults');
       map.setView([point.lat, point.lng], 12);
-    } else {
-      elements.finderStatus.textContent = `${matches.length} ${t(state, 'searchResultCount')}`;
-      const bounds = L.latLngBounds(matches.map((church) => [Number(church.lat), Number(church.lng)]));
-      map.fitBounds(bounds.pad(0.25));
-      state.selectedChurchId = matches[0].id;
-      renderChurchDetails(matches[0]);
+      return [];
     }
 
-    document.querySelector('#map-section').scrollIntoView({ behavior: 'smooth' });
+    const visibleMatches = matches.filter((church) => !state.mapFilteredIds || state.mapFilteredIds.has(church.id));
+    elements.finderStatus.textContent = `${visibleMatches.length} ${t(state, 'searchResultCount')}`;
+    const bounds = L.latLngBounds(matches.map((church) => [Number(church.lat), Number(church.lng)]));
+    map.fitBounds(bounds.pad(0.25));
+
+    const selected = visibleMatches[0] || matches[0];
+    if (selected) {
+      state.selectedChurchId = selected.id;
+      renderChurchDetails(selected);
+    }
+
+    document.querySelector('#find-church')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return matches;
+  };
+
+  elements.finderForm.elements.address.addEventListener('input', async (event) => {
+    state.lastFinderPoint = null;
+    const matches = await searchMontrealAddresses(event.target.value, 6);
+    if (!matches.length || !addressList) return;
+    addressList.innerHTML = matches.map((item) => `<option value="${item.fullAddress}"></option>`).join('');
   });
+
+  elements.finderForm.elements.address.addEventListener('change', () => applyLocationFilter({ shouldGeocode: true }));
+  elements.finderForm.elements.radiusKm.addEventListener('change', () => applyLocationFilter({ shouldGeocode: false }));
+  elements.finderForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await applyLocationFilter({ shouldGeocode: true });
+  });
+
+  return {
+    applyLocationFilter,
+    clearLocationFilter() {
+      state.filteredIds = null;
+      state.lastFinderPoint = null;
+      elements.finderStatus.textContent = '';
+      renderMarkers();
+    }
+  };
 }
