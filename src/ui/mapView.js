@@ -25,8 +25,6 @@ export function renderMarkers({ map, state, onSelectChurch }) {
 
   state.churches.forEach((church) => {
     if (state.filteredIds && !state.filteredIds.has(church.id)) return;
-    if (state.mapFilteredIds && !state.mapFilteredIds.has(church.id)) return;
-
     const marker = L.marker([Number(church.lat), Number(church.lng)]).addTo(map);
     marker.bindPopup(`<strong>${church.name}</strong>`);
     marker.on('click', () => onSelectChurch(church));

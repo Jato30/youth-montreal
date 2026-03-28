@@ -20,9 +20,8 @@ Web app to help youth and young adults in Montreal discover nearby churches and 
 - Free data persistence strategy:
   - localStorage fallback by default
   - optional Google Sheets sync via Apps Script endpoint (set `SHEETS_WEB_APP_URL` in `src/config.js`).
-- Phase 5 hardening additions: privacy/legal pages, ADM JSON export/import backup tools, and a lightweight audit log.
 
-## Run locally (web)
+## Run locally
 
 ```bash
 python3 -m http.server 4173
