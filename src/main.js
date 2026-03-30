@@ -106,6 +106,26 @@ const state = {
 
 const map = createMap();
 
+function setupMapResizeSupport() {
+  const refreshMapSize = () => {
+    requestAnimationFrame(() => map.invalidateSize());
+  };
+
+  [elements.publicMapSlot, elements.editorMapSlot].forEach((slot) => {
+    if (!slot) return;
+    slot.addEventListener('mouseup', refreshMapSize);
+    slot.addEventListener('touchend', refreshMapSize, { passive: true });
+  });
+
+  if ('ResizeObserver' in window) {
+    const observer = new ResizeObserver(refreshMapSize);
+    if (elements.publicMapSlot) observer.observe(elements.publicMapSlot);
+    if (elements.editorMapSlot) observer.observe(elements.editorMapSlot);
+  }
+
+  window.addEventListener('resize', refreshMapSize);
+}
+
 function scrollToSection(targetId) {
   document.querySelector(`#${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -405,6 +425,7 @@ async function init() {
   });
 
   setupNavigation();
+  setupMapResizeSupport();
   setupCalendar();
   setupMapFilters(finderController);
   setupPublicForms();

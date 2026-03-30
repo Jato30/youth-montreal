@@ -337,12 +337,18 @@ a {
 
 #editor-map-slot,
 #public-map-slot {
-  min-height: 100%;
+  resize: vertical;
+  overflow: auto;
+  min-height: 320px;
+  height: var(--map-slot-height, 540px);
+}
+
+#public-map-slot {
+  --map-slot-height: 540px;
 }
 
 #editor-map-slot {
-  resize: vertical;
-  overflow: auto;
+  --map-slot-height: 720px;
   min-height: 360px;
 }
 
@@ -419,16 +425,13 @@ a {
 }
 
 #map {
-  min-height: 540px;
+  height: 100%;
+  min-height: 100%;
   border-radius: 28px;
   overflow: hidden;
   border: 1px solid rgba(23, 32, 51, 0.08);
   box-shadow: var(--shadow-soft);
   background: #d6e3ee;
-}
-
-#editor-map-slot #map {
-  min-height: 720px;
 }
 
 .details-sidecard,
