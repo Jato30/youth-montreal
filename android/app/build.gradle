@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    alias libs.plugins.android.application
 }
 
 import java.util.Properties
@@ -31,10 +31,10 @@ android {
         applicationId 'org.youthmtl.app'
         minSdkVersion 24
         targetSdkVersion 35
-
+        
         def vCode = project.findProperty('YOUTH_MTL_VERSION_CODE')
         versionCode vCode != null ? vCode.toInteger() : 1
-
+        
         def vName = project.findProperty('YOUTH_MTL_VERSION_NAME')
         versionName vName != null ? vName.toString() : "1.0.0"
     }
@@ -105,6 +105,6 @@ dependencies {
         }
     }
 
-    implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.webkit:webkit:1.11.0'
+    implementation libs.androidx.appcompat
 }
