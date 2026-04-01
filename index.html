@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Youth Montreal Church Finder</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand-block" href="#about-us" aria-label="Youth Montreal home">
+        <div class="brand-logo">YOUTH<br />MTL</div>
+        <div class="brand-cross" aria-hidden="true"></div>
+      </a>
+
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="#about-us" data-i18n="navAbout">About us</a>
+        <a href="#find-church" data-i18n="navFind">Find a church</a>
+        <a href="#contact-us" data-i18n="navContact">Contact us</a>
+      </nav>
+
+
+      <div class="header-controls">
+        <label class="language-picker">
+          <span data-i18n="language">Language</span>
+          <select id="language-select">
+            <option value="en">English</option>
+            <option value="fr-CA">Français (Canada)</option>
+          </select>
+        </label>
+        <button id="toggle-host" type="button" class="secondary" data-i18n="hostMode">Host mode</button>
+        <button id="toggle-admin" type="button" data-i18n="admMode">ADM Mode</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section id="about-us" class="hero-section section-card hero-background">
+        <div class="hero-copy">
+          <p class="eyebrow">YOUTH MTL</p>
+          <h1 data-i18n="heroTitle">Connecting young people to local churches across Montreal.</h1>
+          <p data-i18n="heroBody">
+            Our vision is to help every youth and young adult quickly find a nearby Bible study, prayer meeting, church service, or fellowship.
+          </p>
+          <a href="https://www.instagram.com/youth.montreal/" target="_blank" rel="noreferrer" class="inline-link" data-i18n="instagramLink">Follow Youth Montreal on Instagram</a>
+        </div>
+      </section>
+
+      <section id="my-church" class="section-card hidden">
+        <div class="section-heading-row">
+          <div>
+            <p class="eyebrow" data-i18n="myChurchEyebrow">Private workspace</p>
+            <h2 data-i18n="myChurchTitle">My church</h2>
+          </div>
+          <p id="workspace-status" class="help-text"></p>
+        </div>
+
+        <div class="workspace-toolbar">
+          <div class="segmented-control">
+            <button type="button" class="segment-btn active" data-workspace-view="places" data-i18n="placesMode">Churches</button>
+            <button type="button" class="segment-btn" data-workspace-view="events" data-i18n="eventsMode">Events</button>
+          </div>
+          <div class="segmented-control workspace-tabs admin-only hidden" id="moderation-tabs">
+            <button type="button" class="segment-btn active" data-moderation-view="suggestions" data-i18n="suggestionsTab">Suggestions</button>
+            <button type="button" class="segment-btn" data-moderation-view="hostRequests" data-i18n="hostRequestsTab">Host requests</button>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          <section class="workspace-column">
+            <div id="workspace-places-view">
+              <div class="view-section-toolbar">
+                <button id="add-church" type="button" class="secondary admin-only hidden" data-i18n="addChurch">Add church</button>
+              </div>
+              <label>
+                <span data-i18n="searchChurches">Search churches</span>
+                <input id="church-manager-search" placeholder="Name, address, language" />
+              </label>
+              <div id="church-manager-list" class="stack-list"></div>
+            </div>
+
+            <div id="workspace-events-view" class="hidden">
+              <div class="view-section-toolbar">
+                <button id="workspace-add-event" type="button" class="secondary" data-i18n="addEvent">Add event</button>
+              </div>
+              <div class="events-toolbar">
+                <div class="segmented-control">
+                  <button type="button" class="segment-btn active" data-workspace-event-mode="daily" data-i18n="dailyView">Daily</button>
+                  <button type="button" class="segment-btn" data-workspace-event-mode="weekly" data-i18n="weeklyView">Weekly</button>
+                  <button type="button" class="segment-btn" data-workspace-event-mode="monthly" data-i18n="monthlyView">Monthly</button>
+                </div>
+                <div class="finder-actions compact-actions">
+                  <button id="workspace-events-prev" type="button" class="secondary" data-i18n="previousPage">Previous</button>
+                  <span id="workspace-events-page" class="help-text"></span>
+                  <button id="workspace-events-next" type="button" class="secondary" data-i18n="nextPage">Next</button>
+                </div>
+              </div>
+              <label>
+                <span data-i18n="searchEvents">Search events</span>
+                <input id="event-manager-search" placeholder="Bible study, fellowship..." />
+              </label>
+              <div id="event-manager-list" class="stack-list"></div>
+            </div>
+          </section>
+
+          <section class="workspace-column">
+            <section id="admin-panel" class="admin-panel-card hidden">
+              <div class="editor-shell">
+                <div class="editor-form-column">
+                  <h3 id="admin-title" data-i18n="addUpdateChurch">Add / update church</h3>
+                  <p id="admin-status" class="help-text"></p>
+                  <p id="editor-context" class="editor-context help-text hidden"></p>
+                  <p class="help-text" data-i18n="editingFocusHint">While editing, other sections are dimmed so you can focus on this church.</p>
+                  <form id="church-form">
+                    <input type="hidden" name="churchId" />
+                    <input type="hidden" name="eventIndex" />
+                    <div class="event-host-fields hidden">
+                      <label>
+                        <span data-i18n="churchName">Church name</span>
+                        <input name="hostChurchName" list="saved-churches" autocomplete="organization" />
+                      </label>
+                      <p id="event-host-summary" class="help-text"></p>
+                    </div>
+                    <div class="church-fields">
+                      <label><span data-i18n="churchName">Church name</span><input name="name" required /></label>
+                      <label>
+                        <span data-i18n="address">Address</span>
+                        <input id="church-address-input" name="address" list="montreal-addresses" autocomplete="street-address" required />
+                      </label>
+                      <label><span data-i18n="googleMapsPinUrl">Google Maps pin URL</span><input name="googleMapsUrl" placeholder="https://maps.google.com/..." /></label>
+                      <label><span data-i18n="googlePlaceId">Google Place ID (optional)</span><input name="googlePlaceId" placeholder="ChIJ..." /></label>
+                      <div class="editor-field-grid">
+                        <label><span data-i18n="latitude">Latitude</span><input type="number" step="any" name="lat" required /></label>
+                        <label><span data-i18n="longitude">Longitude</span><input type="number" step="any" name="lng" required /></label>
+                      </div>
+                      <p class="help-text" data-i18n="mapClickHint">When editing, click the map to capture coordinates and address automatically.</p>
+                      <fieldset class="checkbox-group">
+                        <legend data-i18n="languagesSpoken">Languages spoken</legend>
+                        <label><input type="checkbox" name="languages" value="English" /> <span>English</span></label>
+                        <label><input type="checkbox" name="languages" value="Français" /> <span>Français</span></label>
+                      </fieldset>
+                      <label><span data-i18n="website">Website</span><input type="url" name="website" /></label>
+                      <label><span data-i18n="instagram">Instagram</span><input type="url" name="instagram" /></label>
+                      <label><span data-i18n="facebook">Facebook</span><input type="url" name="facebook" /></label>
+                      <label><span data-i18n="whatsapp">WhatsApp</span><input type="url" name="whatsapp" /></label>
+                    </div>
+
+                    <fieldset class="event-editor-block">
+                      <legend data-i18n="gatherings">Gatherings</legend>
+                      <div id="events-list"></div>
+                      <button id="add-event" type="button" data-i18n="addGathering">+ Add gathering</button>
+                    </fieldset>
+                  </form>
+                </div>
+                <aside class="editor-map-column">
+                  <h4 data-i18n="editMapTitle">Map</h4>
+                  <p class="help-text" data-i18n="editMapHint">Use the map to confirm the pin and auto-fill the address details.</p>
+                  <div id="editor-map-slot"></div>
+                </aside>
+                <div class="admin-actions editor-footer">
+                  <button id="delete-editing-item" type="button" class="secondary danger hidden" data-i18n="delete">Delete</button>
+                  <button id="cancel-edit" type="button" class="secondary" data-i18n="cancelEdit">Cancel edit</button>
+                  <button id="save-edit" type="submit" form="church-form" data-i18n="saveChurch">Save church</button>
+                </div>
+              </div>
+            </section>
+
+            <section id="workspace-moderation" class="admin-panel-card hidden">
+              <h3 data-i18n="reviewSuggestionsTitle">Review suggestions</h3>
+              <div id="suggestions-queue" class="stack-list"></div>
+              <div id="host-queue" class="stack-list hidden"></div>
+            </section>
+
+            <section id="hardening-panel" class="admin-panel-card hidden admin-only">
+              <h3 data-i18n="hardeningTitle">Hardening tools</h3>
+              <div class="finder-actions">
+                <button id="export-data" type="button" data-i18n="exportBackup">Export backup</button>
+                <label class="file-input-label secondary">
+                  <span data-i18n="importBackup">Import backup</span>
+                  <input id="import-data" type="file" accept="application/json" hidden />
+                </label>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <section id="audit-section" class="section-card hidden admin-only">
+        <details class="audit-accordion">
+          <summary data-i18n="auditLogTitle">Audit log</summary>
+          <ul id="audit-log-list" class="audit-log-list"></ul>
+        </details>
+      </section>
+
+      <section id="find-church" class="section-card search-background">
+        <div class="section-heading-row">
+          <div>
+            <p class="eyebrow" data-i18n="findChurchEyebrow">Discover</p>
+            <h2 data-i18n="findChurch">Find a church near you</h2>
+          </div>
+        </div>
+
+        <div class="view-toggle-row">
+          <div class="segmented-control">
+            <button id="show-map-view" type="button" class="segment-btn active" data-find-view="map" data-i18n="mapView">Map view</button>
+            <button id="show-calendar-view" type="button" class="segment-btn" data-find-view="calendar" data-i18n="calendarViewToggle">Calendar view</button>
+          </div>
+          <div id="calendar-mode-toggle" class="segmented-control hidden">
+            <button type="button" class="segment-btn active" data-calendar-mode="daily" data-i18n="dailyView">Daily</button>
+            <button type="button" class="segment-btn" data-calendar-mode="weekly" data-i18n="weeklyView">Weekly</button>
+            <button type="button" class="segment-btn" data-calendar-mode="monthly" data-i18n="monthlyView">Monthly</button>
+          </div>
+        </div>
+
+        <div id="map-view-panel">
+          <form id="finder-form" class="map-filters">
+            <label>
+              <span data-i18n="addressSearch">Your address</span>
+              <input id="finder-address" name="address" list="montreal-addresses" placeholder="1234 Rue Sainte-Catherine O, Montreal" required />
+              <datalist id="montreal-addresses">
+                <option value="1440 Rue Saint-Catherine O, Montreal"></option>
+                <option value="500 Rue Sainte-Catherine E, Montreal"></option>
+                <option value="1000 Rue de la Gauchetière O, Montreal"></option>
+                <option value="3800 Chemin Queen-Mary, Montreal"></option>
+                <option value="5455 Avenue de Gaspé, Montreal"></option>
+                <option value="1050 Rue Gilford, Montreal"></option>
+              </datalist>
+            </label>
+            <label class="radius-control">
+              <span data-i18n="radius">Radius</span>
+              <input id="finder-radius" name="radiusKm" type="range" min="0.3" max="50" step="0.1" value="5" />
+              <strong id="finder-radius-value">5 km</strong>
+            </label>
+            <label><span data-i18n="filterLanguage">Language</span><input id="map-filter-language" list="available-languages" placeholder="English, Français..." /></label>
+            <label>
+              <span data-i18n="eventType">Event type</span>
+              <select id="map-filter-type">
+                <option value="" data-i18n="allEventTypes">All event types</option>
+                <option value="Bible study" data-i18n="eventBibleStudy">Bible study</option>
+                <option value="Church service" data-i18n="eventChurchService">Church service</option>
+                <option value="Fellowship" data-i18n="eventFellowship">Fellowship</option>
+                <option value="Worship" data-i18n="eventWorship">Worship</option>
+                <option value="Prayer" data-i18n="eventPrayer">Prayer</option>
+                <option value="Community work" data-i18n="eventCommunityWork">Community work</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="ageGroup">Age group</span>
+              <select id="map-filter-age">
+                <option value="" data-i18n="allAges">All</option>
+                <option value="teens" data-i18n="ageTeens">Teens</option>
+                <option value="young-adults" data-i18n="ageYoungAdults">Young adults</option>
+                <option value="all" data-i18n="ageMixed">Mixed</option>
+              </select>
+            </label>
+            <div class="finder-actions">
+              <button id="map-apply" type="button" data-i18n="applyFilters">Apply filters</button>
+              <button id="map-clear" type="button" class="secondary" data-i18n="clearFilters">Clear</button>
+            </div>
+            <p id="finder-status" class="help-text"></p>
+          </form>
+          <div id="public-map-slot">
+            <section id="map" aria-label="Community churches map in Montreal"></section>
+          </div>
+          <aside class="details-sidecard">
+            <h3 data-i18n="churchDetails">Church details</h3>
+            <p id="empty-state" data-i18n="emptyState">Click a marker on the map to view details.</p>
+            <div id="details" class="hidden"></div>
+          </aside>
+        </div>
+
+        <div id="calendar-view-panel" class="hidden">
+          <div class="calendar-layout compact">
+            <div class="calendar-toolbar">
+              <button id="calendar-toggle-filters" type="button" class="secondary icon-btn" aria-label="Toggle calendar filters" data-i18n="toggleFilters">Filters</button>
+            </div>
+            <section class="calendar-filters">
+              <label><span data-i18n="search">Search</span><input id="calendar-keyword" placeholder="Church, address, event type" /></label>
+              <label>
+                <span data-i18n="eventType">Event type</span>
+                <select id="calendar-type">
+                  <option value="" data-i18n="allEventTypes">All event types</option>
+                  <option value="Bible study" data-i18n="eventBibleStudy">Bible study</option>
+                  <option value="Church service" data-i18n="eventChurchService">Church service</option>
+                  <option value="Fellowship" data-i18n="eventFellowship">Fellowship</option>
+                  <option value="Worship" data-i18n="eventWorship">Worship</option>
+                  <option value="Prayer" data-i18n="eventPrayer">Prayer</option>
+                  <option value="Community work" data-i18n="eventCommunityWork">Community work</option>
+                </select>
+              </label>
+              <label><span data-i18n="language">Language</span><input id="calendar-language" list="available-languages" placeholder="English, Français..." /></label>
+              <label>
+                <span data-i18n="ageGroup">Age group</span>
+                <select id="calendar-age">
+                  <option value="" data-i18n="allAges">All</option>
+                  <option value="teens" data-i18n="ageTeens">Teens</option>
+                  <option value="young-adults" data-i18n="ageYoungAdults">Young adults</option>
+                  <option value="all" data-i18n="ageMixed">Mixed</option>
+                </select>
+              </label>
+              <label><span data-i18n="from">From</span><input id="calendar-from" type="date" /></label>
+              <label><span data-i18n="to">To</span><input id="calendar-to" type="date" /></label>
+              <button id="calendar-apply" type="button" data-i18n="applyFilters">Apply filters</button>
+              <p id="calendar-count" class="help-text"></p>
+            </section>
+            <section id="calendar-list" class="calendar-list"></section>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact-us" class="section-card contact-background">
+        <div class="section-heading-row">
+          <div>
+            <p class="eyebrow" data-i18n="contactEyebrow">Let’s talk</p>
+            <h2 data-i18n="contactTitle">Contact us</h2>
+          </div>
+        </div>
+
+        <div class="contact-layout single-column">
+          <section id="contact-form-panel">
+            <form id="contact-form">
+              <label><span data-i18n="fullName">Full name</span><input name="fullName" required /></label>
+              <label><span data-i18n="phoneNumber">Phone number</span><input name="phone" required /></label>
+              <label><span data-i18n="subject">Subject</span><input name="subject" required /></label>
+              <label><span data-i18n="message">Message</span><textarea name="message" rows="5" required></textarea></label>
+              <div class="finder-actions">
+                <button id="contact-send" type="submit" data-i18n="send">Send</button>
+                <button id="toggle-host-request" type="button" class="secondary" data-i18n="requestHost">Request to be a host</button>
+              </div>
+            </form>
+            <p id="contact-status" class="help-text"></p>
+          </section>
+
+          <section id="host-request-panel" class="hidden">
+            <form id="host-request-form">
+              <label><span data-i18n="fullName">Full name</span><input name="fullName" required /></label>
+              <label><span data-i18n="churchName">Church name</span><input name="churchName" required /></label>
+              <label><span data-i18n="positionTitle">Position</span><input name="position" required /></label>
+              <label><span data-i18n="phoneNumber">Phone number</span><input name="phone" required /></label>
+              <label><span data-i18n="message">Message</span><textarea name="message" rows="5" required></textarea></label>
+              <div class="finder-actions">
+                <button id="host-request-send" type="submit" data-i18n="send">Send</button>
+                <button id="host-request-cancel" type="button" class="secondary" data-i18n="cancel">Cancel</button>
+              </div>
+            </form>
+            <p id="host-request-status" class="help-text"></p>
+          </section>
+        </div>
+
+      </section>
+
+      <footer class="site-footer">
+        <div class="social-footer">
+          <span class="social-footer-label" data-i18n="followUs">Follow us on our socials:</span>
+          <a href="https://www.instagram.com/youth.montreal/" target="_blank" rel="noreferrer" aria-label="Instagram" class="social-icon">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <defs>
+                <linearGradient id="instagram-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#f9ce34" />
+                  <stop offset="38%" stop-color="#ee2a7b" />
+                  <stop offset="68%" stop-color="#6228d7" />
+                  <stop offset="100%" stop-color="#4f5bd5" />
+                </linearGradient>
+              </defs>
+              <rect x="7" y="7" width="50" height="50" rx="15" fill="white"/>
+              <rect x="18" y="18" width="28" height="28" rx="10" fill="none" stroke="url(#instagram-gradient)" stroke-width="4.5"/>
+              <circle cx="32" cy="32" r="7.5" fill="none" stroke="url(#instagram-gradient)" stroke-width="4.5"/>
+              <circle cx="43.5" cy="20.5" r="3.5" fill="url(#instagram-gradient)"/>
+            </svg>
+          </a>
+          <a href="https://www.tiktok.com/@youth.montreal" target="_blank" rel="noreferrer" aria-label="TikTok" class="social-icon">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="7" y="7" width="50" height="50" rx="15" fill="white"/>
+              <path d="M38 16c2.4 4.6 5.2 6.8 9.5 7.5v6.4c-3.4-.1-6.3-1.1-9.2-3.2v11.6c0 7.6-5.1 12.7-12.4 12.7-5.9 0-10.6-4.2-10.6-9.8 0-5.9 4.6-10.1 11.1-10.1 1.1 0 2 .1 2.8.4v6.6a6.9 6.9 0 0 0-2.1-.4c-2.9 0-4.9 1.6-4.9 4 0 2.3 1.9 4 4.4 4 3.1 0 4.9-2 4.9-5.7V16z" fill="#25f4ee" transform="translate(-1.5 1.5)"/>
+              <path d="M38 16c2.4 4.6 5.2 6.8 9.5 7.5v6.4c-3.4-.1-6.3-1.1-9.2-3.2v11.6c0 7.6-5.1 12.7-12.4 12.7-5.9 0-10.6-4.2-10.6-9.8 0-5.9 4.6-10.1 11.1-10.1 1.1 0 2 .1 2.8.4v6.6a6.9 6.9 0 0 0-2.1-.4c-2.9 0-4.9 1.6-4.9 4 0 2.3 1.9 4 4.4 4 3.1 0 4.9-2 4.9-5.7V16z" fill="#fe2c55" transform="translate(1.2 -1.2)" opacity="0.88"/>
+              <path d="M38 16c2.4 4.6 5.2 6.8 9.5 7.5v6.4c-3.4-.1-6.3-1.1-9.2-3.2v11.6c0 7.6-5.1 12.7-12.4 12.7-5.9 0-10.6-4.2-10.6-9.8 0-5.9 4.6-10.1 11.1-10.1 1.1 0 2 .1 2.8.4v6.6a6.9 6.9 0 0 0-2.1-.4c-2.9 0-4.9 1.6-4.9 4 0 2.3 1.9 4 4.4 4 3.1 0 4.9-2 4.9-5.7V16z" fill="#111"/>
+            </svg>
+          </a>
+        </div>
+        <div class="footer-meta">
+          <button class="footer-link" type="button" data-target="privacy-section" data-i18n="privacyPage">Privacy</button>
+          <button class="footer-link" type="button" data-target="legal-section" data-i18n="legalPage">Legal</button>
+        </div>
+      </footer>
+
+      <section id="privacy-section" class="section-card hidden static-page">
+        <div class="static-card">
+          <h2 data-i18n="privacyPage">Privacy</h2>
+          <p data-i18n="privacyBody">This project stores venue, event, suggestion, and moderation data in your browser for now. Do not enter sensitive personal information.</p>
+        </div>
+      </section>
+
+      <section id="legal-section" class="section-card hidden static-page">
+        <div class="static-card">
+          <h2 data-i18n="legalPage">Legal</h2>
+          <p data-i18n="legalBody">Youth Montreal publishes community-submitted information that may be reviewed by administrators. Always verify event details with the host before attending.</p>
+        </div>
+      </section>
+    </main>
+
+    <template id="event-template">
+      <div class="event-row">
+        <div class="event-row-header">
+          <span class="event-row-kicker" data-i18n="gatheringDetails">Gathering details</span>
+          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event">✕</button>
+        </div>
+        <div class="event-row-top">
+          <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
+          <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
+          <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+        </div>
+        <div class="checkbox-select-list">
+          <span class="field-label" data-i18n="eventType">Event type</span>
+          <fieldset class="checkbox-group checkbox-group-list">
+            <label><input type="checkbox" name="type" value="Bible study" /> <span data-i18n="eventBibleStudy">Bible study</span></label>
+            <label><input type="checkbox" name="type" value="Church service" /> <span data-i18n="eventChurchService">Church service</span></label>
+            <label><input type="checkbox" name="type" value="Fellowship" /> <span data-i18n="eventFellowship">Fellowship</span></label>
+            <label><input type="checkbox" name="type" value="Worship" /> <span data-i18n="eventWorship">Worship</span></label>
+            <label><input type="checkbox" name="type" value="Prayer" /> <span data-i18n="eventPrayer">Prayer</span></label>
+            <label><input type="checkbox" name="type" value="Community work" /> <span data-i18n="eventCommunityWork">Community work</span></label>
+          </fieldset>
+          <p class="checkbox-summary help-text"></p>
+        </div>
+        <div class="editor-field-grid">
+          <label>
+            <span data-i18n="ageGroup">Age group</span>
+            <select name="ageGroup">
+              <option value="all" data-i18n="allAges">All ages</option>
+              <option value="teens" data-i18n="ageTeens">Teens</option>
+              <option value="young-adults" data-i18n="ageYoungAdults">Young adults</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="repeatsLabel">Repeats:</span>
+            <select name="recurrence">
+              <option value="none">One-time</option>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Bi-weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </template>
+
+    <datalist id="saved-churches"></datalist>
+
+    <datalist id="available-languages">
+      <option value="English"></option>
+      <option value="Français"></option>
+    </datalist>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
