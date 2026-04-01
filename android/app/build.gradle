@@ -1,0 +1,110 @@
+plugins {
+    id 'com.android.application'
+}
+
+import java.util.Properties
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+def valueFromEnvOrProps = { String envName, String propName ->
+    String envValue = System.getenv(envName)
+    if (envValue != null && !envValue.trim().isEmpty()) return envValue
+    String propValue = keystoreProperties.getProperty(propName)
+    return (propValue != null && !propValue.trim().isEmpty()) ? propValue : null
+}
+
+def sStoreFile = valueFromEnvOrProps('ANDROID_STORE_FILE', 'storeFile')
+def sStorePassword = valueFromEnvOrProps('ANDROID_STORE_PASSWORD', 'storePassword')
+def sKeyAlias = valueFromEnvOrProps('ANDROID_KEY_ALIAS', 'keyAlias')
+def sKeyPassword = valueFromEnvOrProps('ANDROID_KEY_PASSWORD', 'keyPassword')
+def hasReleaseSigning = sStoreFile != null && sStorePassword != null && sKeyAlias != null && sKeyPassword != null
+
+android {
+    namespace 'org.youthmtl.app'
+    compileSdkVersion 36
+
+    defaultConfig {
+        applicationId 'org.youthmtl.app'
+        minSdkVersion 24
+        targetSdkVersion 35
+
+        def vCode = project.findProperty('YOUTH_MTL_VERSION_CODE')
+        versionCode vCode != null ? vCode.toInteger() : 1
+
+        def vName = project.findProperty('YOUTH_MTL_VERSION_NAME')
+        versionName vName != null ? vName.toString() : "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(sStoreFile)
+                storePassword sStorePassword
+                keyAlias sKeyAlias
+                keyPassword sKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+tasks.register('syncWebAssets', Copy) {
+    from('../..') {
+        include 'index.html', 'styles.css', 'app.js', 'favicon.svg'
+        include 'src/**'
+        include 'README.md'
+        exclude 'android/**'
+    }
+    into('src/main/assets')
+}
+
+preBuild.dependsOn tasks.named('syncWebAssets')
+
+gradle.taskGraph.whenReady { graph ->
+    boolean releaseTaskRequested = graph.allTasks.any { task ->
+        task.name in ['assembleRelease', 'bundleRelease']
+    }
+    if (releaseTaskRequested && !hasReleaseSigning) {
+        throw new GradleException('Missing release signing config. Set ANDROID_STORE_FILE/ANDROID_STORE_PASSWORD/ANDROID_KEY_ALIAS/ANDROID_KEY_PASSWORD or create android/keystore.properties from android/keystore.properties.example.')
+    }
+}
+
+dependencies {
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22") {
+            because("kotlin-stdlib-jdk7 is now part of kotlin-stdlib")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22") {
+            because("kotlin-stdlib-jdk8 is now part of kotlin-stdlib")
+        }
+    }
+
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
