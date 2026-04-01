@@ -65,6 +65,8 @@ keyPassword=...
 ```
 
 > `android/keystore.properties` is git-ignored and should never be committed.
+>
+> Recommended: keep your upload key outside the repo (e.g. `C:/Users/<you>/upload-keys/...`) and never commit `.jks` / `.keystore` files.
 
 Alternative: set these environment variables instead of using the file:
 

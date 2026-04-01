@@ -1,5 +1,8 @@
 # Android local/secrets/build outputs
 android/keystore.properties
+android/keys/
+*.jks
+*.keystore
 android/.gradle/
 android/build/
 android/app/build/
