@@ -15,9 +15,12 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.webkit.WebViewAssetLoader;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "YouthMtlWebView";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/index.html";
+
     private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -43,6 +46,10 @@ public class MainActivity extends AppCompatActivity {
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
 
+        WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
@@ -52,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
@@ -71,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         setContentView(webView);
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.loadUrl(APP_URL);
     }
 
     @Override
