@@ -1,1 +1,6 @@
-# Keep defaults for now.
+# Keep app entry points used by manifest and WebView startup.
+-keep class org.youthmtl.app.MainActivity { *; }
+
+# Keep WebView and AndroidX webkit APIs referenced at runtime.
+-keep class android.webkit.** { *; }
+-dontwarn android.webkit.**
