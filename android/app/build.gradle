@@ -1,47 +1,51 @@
 plugins {
-    id 'com.android.application'
+    alias libs.plugins.android.application
 }
 
 import java.util.Properties
 
-final Properties keystoreProperties = new Properties()
-final File keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('keystore.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-String valueFromEnvOrProps(String envName, String propName) {
+def valueFromEnvOrProps = { String envName, String propName ->
     String envValue = System.getenv(envName)
     if (envValue != null && !envValue.trim().isEmpty()) return envValue
     String propValue = keystoreProperties.getProperty(propName)
     return (propValue != null && !propValue.trim().isEmpty()) ? propValue : null
 }
 
-final String signingStoreFile = valueFromEnvOrProps('ANDROID_STORE_FILE', 'storeFile')
-final String signingStorePassword = valueFromEnvOrProps('ANDROID_STORE_PASSWORD', 'storePassword')
-final String signingKeyAlias = valueFromEnvOrProps('ANDROID_KEY_ALIAS', 'keyAlias')
-final String signingKeyPassword = valueFromEnvOrProps('ANDROID_KEY_PASSWORD', 'keyPassword')
-final boolean hasReleaseSigning = [signingStoreFile, signingStorePassword, signingKeyAlias, signingKeyPassword].every { it != null }
+def sStoreFile = valueFromEnvOrProps('ANDROID_STORE_FILE', 'storeFile')
+def sStorePassword = valueFromEnvOrProps('ANDROID_STORE_PASSWORD', 'storePassword')
+def sKeyAlias = valueFromEnvOrProps('ANDROID_KEY_ALIAS', 'keyAlias')
+def sKeyPassword = valueFromEnvOrProps('ANDROID_KEY_PASSWORD', 'keyPassword')
+def hasReleaseSigning = sStoreFile != null && sStorePassword != null && sKeyAlias != null && sKeyPassword != null
 
 android {
     namespace 'org.youthmtl.app'
-    compileSdk 35
+    compileSdkVersion 36
 
     defaultConfig {
         applicationId 'org.youthmtl.app'
-        minSdk 24
-        targetSdk 35
-        versionCode (project.findProperty('YOUTH_MTL_VERSION_CODE') ?: '1').toInteger()
-        versionName (project.findProperty('YOUTH_MTL_VERSION_NAME') ?: '1.0.0').toString()
+        minSdkVersion 24
+        targetSdkVersion 35
+        
+        def vCode = project.findProperty('YOUTH_MTL_VERSION_CODE')
+        versionCode vCode != null ? vCode.toInteger() : 1
+        
+        def vName = project.findProperty('YOUTH_MTL_VERSION_NAME')
+        versionName vName != null ? vName.toString() : "1.0.0"
     }
 
     signingConfigs {
         release {
             if (hasReleaseSigning) {
-                storeFile file(signingStoreFile)
-                storePassword signingStorePassword
-                keyAlias signingKeyAlias
-                keyPassword signingKeyPassword
+                storeFile file(sStoreFile)
+                storePassword sStorePassword
+                keyAlias sKeyAlias
+                keyPassword sKeyPassword
             }
         }
     }
@@ -51,7 +55,8 @@ android {
             minifyEnabled false
         }
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
@@ -87,5 +92,14 @@ gradle.taskGraph.whenReady { graph ->
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22") {
+            because("kotlin-stdlib-jdk7 is now part of kotlin-stdlib")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22") {
+            because("kotlin-stdlib-jdk8 is now part of kotlin-stdlib")
+        }
+    }
+
+    implementation libs.androidx.appcompat
 }
