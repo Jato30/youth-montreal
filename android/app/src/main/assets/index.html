@@ -417,14 +417,15 @@
 
     <template id="event-template">
       <div class="event-row">
-        <div class="event-row-header">
-          <span class="event-row-kicker" data-i18n="gatheringDetails">Gathering details</span>
-          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event">✕</button>
+        <div class="event-row-header event-row-header-actions">
+          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event">Remove</button>
         </div>
         <div class="event-row-top">
           <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
-          <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
-          <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+          <div class="event-row-time-group">
+            <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
+            <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+          </div>
         </div>
         <div class="checkbox-select-list">
           <span class="field-label" data-i18n="eventType">Event type</span>
@@ -438,7 +439,7 @@
           </fieldset>
           <p class="checkbox-summary help-text"></p>
         </div>
-        <div class="editor-field-grid">
+        <div class="editor-field-grid event-row-meta-grid">
           <label>
             <span data-i18n="ageGroup">Age group</span>
             <select name="ageGroup">
