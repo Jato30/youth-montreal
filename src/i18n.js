@@ -46,7 +46,6 @@ export const TRANSLATIONS = {
     eventSaved: 'Event saved successfully.',
     churchName: 'Church name',
     eventTitle: 'Event title',
-    gatheringDetails: 'Gathering details',
     address: 'Address',
     googleMapsPinUrl: 'Google Maps pin URL',
     googlePlaceId: 'Google Place ID (optional)',
@@ -85,6 +84,8 @@ export const TRANSLATIONS = {
     searchChurches: 'Search churches',
     delete: 'Delete',
     deleteChurchConfirm: 'Delete this church:',
+    deleteEventConfirm: 'Delete this event?',
+    deleteEventDraftConfirm: 'Remove this unsaved event row?',
     churchDeleted: 'Church deleted.',
     noChurchesFound: 'No churches found.',
     hardeningTitle: 'Hardening tools',
@@ -190,6 +191,14 @@ export const TRANSLATIONS = {
     cancel: 'Cancel',
     toggleFilters: 'Filters',
     today: 'Today'
+    ,
+    remoteSaveFailed: 'Saved locally, but cloud sync failed. Check Sheets backend URL/network.',
+    syncLocalOnly: 'Local only',
+    syncLocalOnlyHint: 'Cloud backend not configured. Data is stored locally on this device.',
+    syncPending: 'Sync pending',
+    syncPendingHint: 'Some changes are not in the cloud yet. Tap to retry sync.',
+    syncUpToDate: 'Cloud synced',
+    syncUpToDateHint: 'All changes are up to date in the cloud database.'
   },
   'fr-CA': {
     language: 'Langue',
@@ -236,7 +245,6 @@ export const TRANSLATIONS = {
     eventSaved: 'Événement enregistré.',
     churchName: "Nom de l'église",
     eventTitle: 'Titre de l’événement',
-    gatheringDetails: 'Détails de la rencontre',
     address: 'Adresse',
     googleMapsPinUrl: 'URL du point Google Maps',
     googlePlaceId: 'Google Place ID (optionnel)',
@@ -275,6 +283,8 @@ export const TRANSLATIONS = {
     searchChurches: 'Rechercher églises',
     delete: 'Supprimer',
     deleteChurchConfirm: 'Supprimer cette église :',
+    deleteEventConfirm: 'Supprimer cet événement ?',
+    deleteEventDraftConfirm: 'Retirer cette ligne d’événement non enregistrée ?',
     churchDeleted: 'Église supprimée.',
     noChurchesFound: 'Aucune église trouvée.',
     hardeningTitle: 'Outils de robustesse',
@@ -379,7 +389,14 @@ export const TRANSLATIONS = {
     nextPage: 'Suivant',
     cancel: 'Annuler',
     toggleFilters: 'Filtres',
-    today: "Aujourd'hui"
+    today: "Aujourd'hui",
+    remoteSaveFailed: 'Enregistré localement, mais la synchronisation cloud a échoué. Vérifiez l’URL Sheets / le réseau.',
+    syncLocalOnly: 'Local seulement',
+    syncLocalOnlyHint: 'Backend cloud non configuré. Les données sont enregistrées localement sur cet appareil.',
+    syncPending: 'Sync en attente',
+    syncPendingHint: 'Certaines modifications ne sont pas encore dans le cloud. Touchez pour réessayer.',
+    syncUpToDate: 'Cloud à jour',
+    syncUpToDateHint: 'Toutes les modifications sont synchronisées dans la base cloud.'
   }
 };
 
