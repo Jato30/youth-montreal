@@ -1,4 +1,4 @@
-# youth-montreal
+# church-finder
 
 Web app to help youth and young adults in Montreal discover nearby churches and gatherings.
 

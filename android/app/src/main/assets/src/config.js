@@ -5,6 +5,6 @@ export const DEFAULT_ZOOM = 10;
 
 // Optional: set your deployed Google Apps Script web app URL for free Sheets backend sync.
 // Example: https://script.google.com/macros/s/AKfycb.../exec
-export const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxBsD5lFdd7C-L6OJ9-8BG7BfIsHtspO5eZF1BKNSuTiFxIpYSGTlvfB3EOiDYnpgQ24A/exec';
+export const SHEETS_WEB_APP_URL = '';
 
 export const ADM_PASSCODE = 'youthmtl-adm';
