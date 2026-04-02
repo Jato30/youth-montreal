@@ -1,6 +1,8 @@
 package org.youthmtl.app;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -35,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Enable edge-to-edge but we will handle insets manually to ensure no overlap
+        // Enable edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         FrameLayout root = new FrameLayout(this);
@@ -50,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        // Handle system bar insets by adding padding to the root view
+        // Handle system bar insets
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
@@ -88,19 +90,28 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                // Handle external links (not our app assets)
+                if (!url.startsWith("https://appassets.androidplatform.net")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to open URL: " + url, e);
+                        return false;
+                    }
+                }
+                return false;
+            }
+
+            @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     Log.e(TAG, "Main frame error: " + error.getDescription());
                     Toast.makeText(MainActivity.this, "Unable to load app. Please restart.", Toast.LENGTH_LONG).show();
-                }
-            }
-
-            @Override
-            public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
-                super.onReceivedHttpError(view, request, errorResponse);
-                if (request.isForMainFrame()) {
-                    Log.e(TAG, "HTTP error code: " + errorResponse.getStatusCode());
                 }
             }
         });
@@ -120,5 +131,14 @@ public class MainActivity extends AppCompatActivity {
             webView = null;
         }
         super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
     }
 }

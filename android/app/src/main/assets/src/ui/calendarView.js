@@ -17,7 +17,7 @@ function normalizeDate(value) {
   return new Date(`${value}T00:00:00`);
 }
 
-function expandEvent(event, rangeStart, rangeEnd, church, eventIndex) {
+function expandEvent(event, rangeStart, rangeEnd, church, eventIndex, nextOnly = false) {
   const baseDate = normalizeDate(event.date);
   const recurrence = event.recurrence || 'none';
   const occurrences = [];
@@ -29,6 +29,9 @@ function expandEvent(event, rangeStart, rangeEnd, church, eventIndex) {
     else if (recurrence === 'monthly') cursor = addMonths(cursor, 1);
     else cursor = addDays(rangeEnd, 1);
   };
+
+  // If nextOnly is true and no range filters are set, we find only the first occurrence from today
+  const today = normalizeDate(new Date().toISOString().slice(0, 10));
 
   while (cursor <= rangeEnd) {
     if (cursor >= rangeStart) {
@@ -44,6 +47,7 @@ function expandEvent(event, rangeStart, rangeEnd, church, eventIndex) {
         recurrence,
         eventIndex
       });
+      if (nextOnly) break; // Stop after first occurrence if we just want the next one
     }
     next();
   }
@@ -51,9 +55,9 @@ function expandEvent(event, rangeStart, rangeEnd, church, eventIndex) {
   return occurrences;
 }
 
-export function collectOccurrences(churches, rangeStart, rangeEnd) {
+export function collectOccurrences(churches, rangeStart, rangeEnd, nextOnly = false) {
   return churches
-    .flatMap((church) => (church.events || []).flatMap((event, index) => expandEvent(event, rangeStart, rangeEnd, church, index)))
+    .flatMap((church) => (church.events || []).flatMap((event, index) => expandEvent(event, rangeStart, rangeEnd, church, index, nextOnly)))
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
 }
 
@@ -92,6 +96,46 @@ function renderDailyList(rows, state) {
 }
 
 function renderGrid(days, rows, state, compactMonth = false) {
+  const isMobile = window.innerWidth <= 900;
+
+  if (isMobile) {
+    // Mobile view: Agenda style list grouped by day (like Google Calendar mobile)
+    return `
+      <div class="calendar-mobile-agenda">
+        ${days.map((day) => {
+          const dateKey = day.toISOString().slice(0, 10);
+          const dayRows = rows.filter((row) => row.date === dateKey);
+          if (!dayRows.length) return ''; // Skip empty days in mobile agenda
+
+          return `
+            <div class="agenda-day-group">
+              <div class="agenda-day-header">
+                <strong>${day.toLocaleDateString(undefined, { weekday: 'long' })}</strong>
+                <span>${day.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+              </div>
+              <div class="agenda-events">
+                ${dayRows.map((row) => {
+                  const index = rows.indexOf(row);
+                  return `
+                    <div class="agenda-event-card" data-row-index="${index}">
+                      <div class="agenda-event-time">${row.time || '00:00'}</div>
+                      <div class="agenda-event-info">
+                        <strong>${row.title || row.type}</strong>
+                        <span>${row.churchName}</span>
+                        <small>${row.type}</small>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('') || `<p class="help-text">${t(state, 'noEventsForFilters')}</p>`}
+      </div>
+    `;
+  }
+
+  // Desktop view: Standard grid
   return `
     <div class="calendar-grid ${compactMonth ? 'calendar-grid-month' : 'calendar-grid-week'}">
       ${days.map((day) => {
@@ -136,18 +180,33 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
   const type = elements.calendarType.value.trim().toLowerCase();
   const language = elements.calendarLanguage.value.trim().toLowerCase();
   const ageGroup = elements.calendarAge?.value || '';
-  const from = elements.calendarFrom.value || new Date().toISOString().slice(0, 10);
-  const to = elements.calendarTo.value || from;
+  const from = elements.calendarFrom.value;
+  const to = elements.calendarTo.value;
   const mode = elements.calendarMode?.value || 'daily';
 
-  let rangeStart = normalizeDate(from);
-  let rangeEnd = normalizeDate(to);
-  if (rangeEnd < rangeStart) rangeEnd = new Date(rangeStart);
-  if (mode === 'daily' && from === to) rangeEnd = new Date(rangeStart);
-  if (mode === 'weekly' && (!elements.calendarTo.value || from === to)) rangeEnd = addDays(rangeStart, 6);
-  if (mode === 'monthly' && (!elements.calendarTo.value || from === to)) rangeEnd = addMonths(rangeStart, 1);
+  // If daily mode and NO specific date filter is applied, we only show TODAY
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let effectiveFrom = from || todayStr;
+  let effectiveTo = to || effectiveFrom;
 
-  const rows = collectOccurrences(state.churches, rangeStart, rangeEnd).filter((row) => {
+  if (mode === 'daily' && !from) {
+    effectiveFrom = todayStr;
+    effectiveTo = todayStr;
+  }
+
+  let rangeStart = normalizeDate(effectiveFrom);
+  let rangeEnd = normalizeDate(effectiveTo);
+
+  if (rangeEnd < rangeStart) rangeEnd = new Date(rangeStart);
+
+  if (mode === 'weekly' && (!to || effectiveFrom === effectiveTo)) rangeEnd = addDays(rangeStart, 6);
+  if (mode === 'monthly' && (!to || effectiveFrom === effectiveTo)) rangeEnd = addMonths(rangeStart, 1);
+
+  // We only show one occurrence (next only) IF there's no specific date filter range applied
+  const isFilteringByRange = from || to;
+  const nextOnly = !isFilteringByRange;
+
+  const rows = collectOccurrences(state.churches, rangeStart, rangeEnd, nextOnly).filter((row) => {
     const church = state.churches.find((item) => item.id === row.churchId);
     if (!church) return false;
     const text = `${row.churchName} ${row.churchAddress || ''} ${row.title || ''} ${row.type}`.toLowerCase();
@@ -178,7 +237,7 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
     elements.calendarList.innerHTML = renderGrid(days, rows, state, true);
   }
 
-  elements.calendarList.querySelectorAll('.calendar-suggest-btn, .calendar-badge').forEach((button) => {
+  elements.calendarList.querySelectorAll('.calendar-suggest-btn, .calendar-badge, .agenda-event-card').forEach((button) => {
     button.addEventListener('click', () => {
       const row = rows[Number(button.dataset.rowIndex)];
       if (!row) return;

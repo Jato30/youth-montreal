@@ -84,7 +84,12 @@ const elements = {
   saveEditButton: document.querySelector('#save-edit'),
   deleteEditingItemButton: document.querySelector('#delete-editing-item'),
   menuToggle: document.querySelector('#menu-toggle'),
-  siteHeader: document.querySelector('.site-header')
+  siteHeader: document.querySelector('.site-header'),
+  radiusInput: document.querySelector('#finder-radius'),
+  calendarDayNav: document.querySelector('#calendar-day-nav'),
+  calPrevDay: document.querySelector('#cal-prev-day'),
+  calToday: document.querySelector('#cal-today'),
+  calNextDay: document.querySelector('#cal-next-day')
 };
 
 const state = {
@@ -103,7 +108,8 @@ const state = {
   onMapChurchSelect: null,
   isAdminMode: false,
   isHostMode: false,
-  hostChurchId: null
+  hostChurchId: null,
+  calendarAnchorDate: new Date()
 };
 
 const map = createMap();
@@ -132,6 +138,16 @@ function scrollToSection(targetId) {
   document.querySelector(`#${targetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function updateCalendarList() {
+  renderCalendarList({
+    state,
+    elements,
+    onSuggestEventUpdate: openEventSuggestion,
+    onEditEvent: editCalendarEvent,
+    onDeleteEvent: deleteCalendarEvent
+  });
+}
+
 function showFindView(mode) {
   const showMap = mode === 'map';
   elements.findViewButtons.forEach((button) => button.classList.toggle('active', button.dataset.findView === mode));
@@ -139,10 +155,11 @@ function showFindView(mode) {
   elements.calendarViewPanel.classList.toggle('hidden', showMap);
   elements.calendarModeToggle.classList.toggle('hidden', showMap);
   elements.staticPages.forEach((page) => page.classList.add('hidden'));
+
   if (showMap) {
     map.invalidateSize();
   } else {
-    renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion, onEditEvent: editCalendarEvent, onDeleteEvent: deleteCalendarEvent });
+    updateCalendarList();
   }
 }
 
@@ -199,7 +216,7 @@ async function deleteCalendarEvent(row) {
   state.auditLog = await appendAuditLog({ action: 'event_deleted', label: `${church.name}:${row.type}` });
   rerenderMarkers();
   renderAuditLog();
-  renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion, onEditEvent: editCalendarEvent, onDeleteEvent: deleteCalendarEvent });
+  updateCalendarList();
 }
 
 function editCalendarEvent(row) {
@@ -216,8 +233,14 @@ const rerenderMarkers = () =>
         state.onMapChurchSelect(church);
         return;
       }
-      state.selectedChurchId = church.id;
-      renderDetails(church, startEditChurch);
+      state.selectedChurchId = (state.selectedChurchId === church.id) ? null : church.id;
+      if (state.selectedChurchId) {
+        renderDetails(church, startEditChurch);
+      } else {
+        elements.details.classList.add('hidden');
+        elements.emptyState.classList.remove('hidden');
+      }
+      rerenderMarkers(); // Update pin colors
     }
   });
 
@@ -234,22 +257,48 @@ function renderAuditLog() {
 
 function setupCalendar() {
   const today = new Date();
-  const in30 = new Date();
-  in30.setDate(today.getDate() + 30);
-  elements.calendarFrom.value = today.toISOString().slice(0, 10);
-  elements.calendarTo.value = in30.toISOString().slice(0, 10);
-  elements.calendarApply.addEventListener('click', () => renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion, onEditEvent: editCalendarEvent, onDeleteEvent: deleteCalendarEvent }));
+  state.calendarAnchorDate = new Date(today);
+
+  elements.calendarFrom.value = '';
+  elements.calendarTo.value = '';
+
+  elements.calendarApply.addEventListener('click', () => {
+    state.calendarAnchorDate = elements.calendarFrom.value ? new Date(elements.calendarFrom.value) : new Date();
+    updateCalendarList();
+  });
+
   elements.calendarToggleFilters.addEventListener('click', () => {
     elements.calendarList.closest('.calendar-layout').classList.toggle('show-calendar-filters');
   });
+
   elements.calendarModeButtons.forEach((button) => {
     button.addEventListener('click', () => {
       elements.calendarModeButtons.forEach((item) => item.classList.toggle('active', item === button));
       elements.calendarMode = { value: button.dataset.calendarMode };
-      renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion, onEditEvent: editCalendarEvent, onDeleteEvent: deleteCalendarEvent });
+
+      const isDaily = button.dataset.calendarMode === 'daily';
+      elements.calendarDayNav.classList.toggle('hidden', !isDaily);
+
+      updateCalendarList();
     });
   });
+
+  // Daily Nav Logic
+  elements.calPrevDay.addEventListener('click', () => {
+    state.calendarAnchorDate.setDate(state.calendarAnchorDate.getDate() - 1);
+    updateCalendarList();
+  });
+  elements.calNextDay.addEventListener('click', () => {
+    state.calendarAnchorDate.setDate(state.calendarAnchorDate.getDate() + 1);
+    updateCalendarList();
+  });
+  elements.calToday.addEventListener('click', () => {
+    state.calendarAnchorDate = new Date();
+    updateCalendarList();
+  });
+
   elements.calendarMode = { value: 'daily' };
+  elements.calendarDayNav.classList.remove('hidden');
 }
 
 function setupMapFilters(finderController) {
@@ -277,10 +326,10 @@ function setupMapFilters(finderController) {
     const address = elements.finderAddress.value.trim();
     if (address) {
       await finderController.applyLocationFilter({ shouldGeocode: !state.lastFinderPoint || state.lastFinderPoint.query !== address });
-      return;
+    } else {
+      state.filteredIds = null;
+      rerenderMarkers();
     }
-    state.filteredIds = null;
-    rerenderMarkers();
     elements.finderStatus.textContent = `${matches.length} ${t(state, 'churchesMatchingFilters')}`;
   };
 
@@ -294,10 +343,13 @@ function setupMapFilters(finderController) {
     finderController.clearLocationFilter();
     syncRadiusLabel();
     resetMapView(map);
-    const selectedChurch = state.churches.find((item) => item.id === state.selectedChurchId) || state.churches[0];
-    if (selectedChurch) renderDetails(selectedChurch, startEditChurch);
+    state.selectedChurchId = null;
+    elements.details.classList.add('hidden');
+    elements.emptyState.classList.remove('hidden');
+    rerenderMarkers();
   });
 
+  elements.radiusInput.addEventListener('change', applyMapFilters);
   elements.finderForm.elements.radiusKm.addEventListener('input', syncRadiusLabel);
   syncRadiusLabel();
 }
@@ -443,6 +495,27 @@ function setupScrollHeader() {
   });
 }
 
+/**
+ * Polling logic for live sync
+ */
+function setupAutoSync() {
+  setInterval(async () => {
+    // Only auto-sync if we are NOT in the middle of editing something
+    if (document.body.classList.contains('editing-mode')) return;
+
+    const remoteChurches = await loadChurches();
+
+    // Check if anything actually changed
+    if (JSON.stringify(remoteChurches) !== JSON.stringify(state.churches)) {
+      state.churches = remoteChurches;
+      rerenderMarkers();
+      updateCalendarList();
+      renderChurchManager();
+      console.log('Live sync: Data updated from remote.');
+    }
+  }, 60000); // Check every 60 seconds
+}
+
 async function init() {
   state.churches = await loadChurches();
   state.suggestions = await loadSuggestions();
@@ -453,7 +526,7 @@ async function init() {
     state,
     map,
     elements,
-    renderMarkers: rerenderMarkers,
+    renderMarkers: () => rerenderMarkers(),
     renderChurchDetails: (church, onEdit) => renderDetails(church, onEdit)
   });
   startEditChurch = adminController.startEditChurch;
@@ -464,7 +537,7 @@ async function init() {
     state,
     map,
     elements,
-    renderMarkers: rerenderMarkers,
+    renderMarkers: () => rerenderMarkers(),
     renderChurchDetails: (church) => renderDetails(church, startEditChurch)
   });
 
@@ -488,9 +561,10 @@ async function init() {
   setupHardeningTools();
   setupMobileMenu();
   setupScrollHeader();
+  setupAutoSync(); // Start polling
   showFindView('map');
   rerenderMarkers();
-  renderCalendarList({ state, elements, onSuggestEventUpdate: openEventSuggestion, onEditEvent: editCalendarEvent, onDeleteEvent: deleteCalendarEvent });
+  updateCalendarList();
   renderAuditLog();
   applyLanguage(state, elements, () => {
     const church = state.churches.find((item) => item.id === state.selectedChurchId);

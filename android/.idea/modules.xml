@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/YouthMontrealAndroid.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/YouthMontrealAndroid.app.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/YouthMontrealAndroid.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/YouthMontrealAndroid.app.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/YouthMontrealAndroid.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/YouthMontrealAndroid.app.unitTest.iml" />
     </modules>

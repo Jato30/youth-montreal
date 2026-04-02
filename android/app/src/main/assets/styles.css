@@ -21,7 +21,7 @@
 
 @media (max-width: 900px) {
   :root {
-    --safe-top: 4px; /* Reduced since MainActivity now handles system insets */
+    --safe-top: 4px;
   }
 }
 
@@ -461,19 +461,25 @@ a {
 
 #editor-map-slot,
 #public-map-slot {
-  resize: vertical;
+  resize: both;
   overflow: auto;
-  min-height: 320px;
-  height: var(--map-slot-height, 540px);
+  min-height: 240px;
+  height: var(--map-slot-height, 420px);
+}
+
+@media (max-width: 900px) {
+  #editor-map-slot,
+  #public-map-slot {
+    --map-slot-height: 320px;
+  }
 }
 
 #public-map-slot {
-  --map-slot-height: 540px;
+  --map-slot-height: 420px;
 }
 
 #editor-map-slot {
-  --map-slot-height: 720px;
-  min-height: 360px;
+  --map-slot-height: 640px;
 }
 
 .checkbox-group {
@@ -548,6 +554,42 @@ a {
   padding: 1rem;
 }
 
+@media (min-width: 901px) {
+  /* WEB ONLY: Optimized filter layout */
+  .map-filters,
+  .calendar-filters {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-areas:
+      "address radius language"
+      "type age group-actions";
+    align-items: end;
+  }
+
+  .map-filters label:nth-child(1) { grid-area: address; }
+  .map-filters label:nth-child(2) { grid-area: radius; }
+  .map-filters label:nth-child(3) { grid-area: language; }
+  .map-filters label:nth-child(4) { grid-area: type; }
+  .map-filters label:nth-child(5) { grid-area: age; }
+  .map-filters .finder-actions { grid-area: group-actions; }
+
+  .calendar-filters {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-areas:
+      "keyword type language"
+      "age from to"
+      ". . apply";
+  }
+
+  .calendar-filters label:nth-child(1) { grid-area: keyword; }
+  .calendar-filters label:nth-child(2) { grid-area: type; }
+  .calendar-filters label:nth-child(3) { grid-area: language; }
+  .calendar-filters label:nth-child(4) { grid-area: age; }
+  .calendar-filters label:nth-child(5) { grid-area: from; }
+  .calendar-filters label:nth-child(6) { grid-area: to; }
+  .calendar-filters button { grid-area: apply; }
+}
+
 #map {
   height: 100%;
   min-height: 100%;
@@ -569,7 +611,7 @@ a {
 }
 
 .details-sidecard {
-  min-height: 540px;
+  min-height: 420px;
 }
 
 .calendar-layout.compact {
@@ -1174,4 +1216,81 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   .checkbox-group-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* NEW: GOOGLE CALENDAR STYLE MOBILE AGENDA */
+.calendar-mobile-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.agenda-day-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.agenda-day-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.agenda-day-header strong {
+  font-size: 1.2rem;
+  text-transform: capitalize;
+  color: var(--brand-strong);
+}
+
+.agenda-day-header span {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.agenda-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.agenda-event-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--card-strong);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  align-items: center;
+}
+
+.agenda-event-time {
+  flex: 0 0 60px;
+  font-weight: 800;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.agenda-event-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.agenda-event-info strong {
+  font-size: 1.05rem;
+}
+
+.agenda-event-info span {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.agenda-event-info small {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-top: 0.2rem;
 }

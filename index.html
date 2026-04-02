@@ -132,28 +132,29 @@
                       </label>
                       <p id="event-host-summary" class="help-text"></p>
                     </div>
-                    <div class="church-fields">
-                      <label><span data-i18n="churchName">Church name</span><input name="name" required /></label>
-                      <label>
+                    <div class="church-fields admin-fields-grid">
+                      <label class="field-name"><span data-i18n="churchName">Church name</span><input name="name" required /></label>
+                      <label class="field-address">
                         <span data-i18n="address">Address</span>
                         <input id="church-address-input" name="address" list="montreal-addresses" autocomplete="street-address" required />
                       </label>
-                      <label><span data-i18n="googleMapsPinUrl">Google Maps pin URL</span><input name="googleMapsUrl" placeholder="https://maps.google.com/..." /></label>
-                      <label><span data-i18n="googlePlaceId">Google Place ID (optional)</span><input name="googlePlaceId" placeholder="ChIJ..." /></label>
-                      <div class="editor-field-grid">
-                        <label><span data-i18n="latitude">Latitude</span><input type="number" step="any" name="lat" required /></label>
-                        <label><span data-i18n="longitude">Longitude</span><input type="number" step="any" name="lng" required /></label>
-                      </div>
-                      <p class="help-text" data-i18n="mapClickHint">When editing, click the map to capture coordinates and address automatically.</p>
-                      <fieldset class="checkbox-group">
+                      <label class="field-pin-url"><span data-i18n="googleMapsPinUrl">Google Maps pin URL</span><input name="googleMapsUrl" placeholder="https://maps.google.com/..." /></label>
+                      <label class="field-place-id"><span data-i18n="googlePlaceId">Google Place ID (optional)</span><input name="googlePlaceId" placeholder="ChIJ..." /></label>
+                      <label class="field-lat"><span data-i18n="latitude">Latitude</span><input type="number" step="any" name="lat" required /></label>
+                      <label class="field-lng"><span data-i18n="longitude">Longitude</span><input type="number" step="any" name="lng" required /></label>
+
+                      <p class="help-text field-hint" data-i18n="mapClickHint">When editing, click the map to capture coordinates and address automatically.</p>
+
+                      <fieldset class="checkbox-group field-langs">
                         <legend data-i18n="languagesSpoken">Languages spoken</legend>
                         <label><input type="checkbox" name="languages" value="English" /> <span>English</span></label>
                         <label><input type="checkbox" name="languages" value="Français" /> <span>Français</span></label>
                       </fieldset>
-                      <label><span data-i18n="website">Website</span><input type="url" name="website" /></label>
-                      <label><span data-i18n="instagram">Instagram</span><input type="url" name="instagram" /></label>
-                      <label><span data-i18n="facebook">Facebook</span><input type="url" name="facebook" /></label>
-                      <label><span data-i18n="whatsapp">WhatsApp</span><input type="url" name="whatsapp" /></label>
+
+                      <label class="field-web"><span data-i18n="website">Website</span><input type="url" name="website" /></label>
+                      <label class="field-insta"><span data-i18n="instagram">Instagram</span><input type="url" name="instagram" /></label>
+                      <label class="field-fb"><span data-i18n="facebook">Facebook</span><input type="url" name="facebook" /></label>
+                      <label class="field-wa"><span data-i18n="whatsapp">WhatsApp</span><input type="url" name="whatsapp" /></label>
                     </div>
 
                     <fieldset class="event-editor-block">
@@ -283,6 +284,11 @@
         <div id="calendar-view-panel" class="hidden">
           <div class="calendar-layout compact">
             <div class="calendar-toolbar">
+              <div class="calendar-nav-controls hidden" id="calendar-day-nav">
+                <button type="button" id="cal-prev-day" class="secondary">&lt;</button>
+                <button type="button" id="cal-today" class="secondary" data-i18n="today">Today</button>
+                <button type="button" id="cal-next-day" class="secondary">&gt;</button>
+              </div>
               <button id="calendar-toggle-filters" type="button" class="secondary icon-btn" aria-label="Toggle calendar filters" data-i18n="toggleFilters">Filters</button>
             </div>
             <section class="calendar-filters">

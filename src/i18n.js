@@ -184,13 +184,12 @@ export const TRANSLATIONS = {
     moderationUpdated: 'Review status updated.',
     newHostChurchName: 'New host church',
     eventDeleted: 'Event deleted.',
-    contactMessagePrompt: 'Tell us what should be updated.'
-    ,
+    contactMessagePrompt: 'Tell us what should be updated.',
     previousPage: 'Previous',
     nextPage: 'Next',
-    cancel: 'Cancel'
-    ,
-    toggleFilters: 'Filters'
+    cancel: 'Cancel',
+    toggleFilters: 'Filters',
+    today: 'Today'
   },
   'fr-CA': {
     language: 'Langue',
@@ -379,7 +378,8 @@ export const TRANSLATIONS = {
     previousPage: 'Précédent',
     nextPage: 'Suivant',
     cancel: 'Annuler',
-    toggleFilters: 'Filtres'
+    toggleFilters: 'Filtres',
+    today: "Aujourd'hui"
   }
 };
 
