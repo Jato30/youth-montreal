@@ -55,7 +55,7 @@ a {
   top: 0;
   z-index: 2000;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 1.5rem;
   padding: calc(0.6rem + var(--safe-top)) clamp(1.1rem, 2vw, 2rem) 0.6rem;
@@ -106,12 +106,16 @@ a {
 }
 
 .header-menu-container {
-  display: contents;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(1rem, 2.5vw, 2.25rem);
+  min-width: 0;
 }
 
 .header-nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -133,9 +137,9 @@ a {
 
 .header-controls {
   display: flex;
-  align-items: end;
+  align-items: center;
   gap: 0.8rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
