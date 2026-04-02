@@ -1186,6 +1186,10 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   justify-content: space-between;
 }
 
+.event-row-header-actions {
+  justify-content: flex-end;
+}
+
 .event-row-kicker {
   font-size: 0.82rem;
   font-weight: 800;
@@ -1196,9 +1200,36 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
 
 .event-row-top {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: minmax(220px, 1fr) minmax(240px, 1fr);
   gap: 0.9rem;
   align-items: end;
+}
+
+.event-row-time-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.event-row-time-group label {
+  min-width: 0;
+}
+
+.event-row-time-group input[type="date"],
+.event-row-time-group input[type="time"] {
+  min-width: 0;
+  width: 100%;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  text-overflow: clip;
+  overflow: visible;
+  white-space: nowrap;
+  padding-right: 2rem;
+}
+
+.event-row-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .checkbox-group-list {
@@ -1230,6 +1261,17 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   .event-row-top,
   .checkbox-group-list {
     grid-template-columns: 1fr;
+  }
+
+  .event-row-time-group,
+  .event-row-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-row-time-group input[type="date"],
+  .event-row-time-group input[type="time"] {
+    font-size: 0.88rem;
+    padding-inline: 0.7rem 1.75rem;
   }
 }
 
