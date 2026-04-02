@@ -54,9 +54,10 @@ a {
   position: sticky;
   top: 0;
   z-index: 2000;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 1.5rem;
   padding: calc(0.6rem + var(--safe-top)) clamp(1.1rem, 2vw, 2rem) 0.6rem;
   background: rgba(251, 250, 247, 0.95);
   backdrop-filter: blur(20px);
@@ -75,7 +76,6 @@ a {
   padding: 0.1rem 1rem 0.1rem 0;
   text-decoration: none;
   color: #000;
-  flex-shrink: 0;
 }
 
 .brand-logo {
@@ -108,16 +108,16 @@ a {
 .header-menu-container {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  flex-grow: 1;
   justify-content: space-between;
+  gap: clamp(1rem, 2.5vw, 2.25rem);
+  min-width: 0;
 }
 
 .header-nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .header-nav a {
@@ -127,7 +127,6 @@ a {
   color: var(--muted);
   font-weight: 600;
   transition: background-color 0.2s ease, color 0.2s ease;
-  white-space: nowrap;
 }
 
 .header-nav a:hover,
@@ -140,20 +139,38 @@ a {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.sync-status {
+  font-size: 0.82rem;
+  padding: 0.52rem 0.75rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.sync-status.sync-ok {
+  background: rgba(40, 167, 69, 0.14);
+  color: #13662d;
+}
+
+.sync-status.sync-pending {
+  background: rgba(255, 184, 0, 0.2);
+  color: #694c00;
+}
+
+.sync-status.sync-local {
+  background: rgba(51, 78, 104, 0.12);
+  color: var(--brand-strong);
 }
 
 .language-picker {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
   font-size: 0.82rem;
   font-weight: 700;
-}
-
-.language-picker select {
-  width: auto;
-  padding: 0.4rem 0.6rem;
 }
 
 .menu-toggle {
@@ -204,10 +221,10 @@ a {
 .site-header.menu-open .hamburger-icon::before { transform: rotate(45deg); top: 0; }
 .site-header.menu-open .hamburger-icon::after { transform: rotate(-45deg); top: 0; }
 
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .site-header {
-    display: grid;
     grid-template-columns: 1fr auto;
+    gap: 0.5rem;
   }
 
   .menu-toggle {
@@ -228,7 +245,6 @@ a {
     box-shadow: -10px 0 40px rgba(27, 39, 58, 0.15);
     z-index: 2001;
     overflow-y: auto;
-    justify-content: flex-start;
   }
 
   .site-header.menu-open .header-menu-container {
@@ -261,11 +277,6 @@ a {
   }
 
   .language-picker {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .language-picker select {
     width: 100%;
   }
 }
@@ -860,6 +871,10 @@ fieldset legend {
   flex-wrap: wrap;
 }
 
+.events-toolbar {
+  margin-bottom: 0.7rem;
+}
+
 .audit-accordion summary {
   cursor: pointer;
   font-weight: 800;
@@ -1157,6 +1172,25 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   border-color: rgba(138, 35, 48, 0.18);
 }
 
+.workspace-tabs-mobile {
+  display: none;
+  margin-bottom: 0.8rem;
+}
+
+.event-row-time-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.event-row-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.icon-mobile-btn {
+  gap: 0.45rem;
+}
+
 .issue-report-btn:hover {
   background: rgba(255, 230, 233, 1);
 }
@@ -1285,6 +1319,62 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
 }
 
 @media (max-width: 900px) {
+  #moderation-tabs {
+    display: none !important;
+  }
+
+  .workspace-tabs-mobile {
+    display: inline-flex;
+  }
+
+  .church-form-new-event-mode #editor-map-slot {
+    --map-slot-height: 300px;
+    width: min(100%, 320px);
+    aspect-ratio: 1 / 1;
+    justify-self: start;
+    resize: both;
+  }
+
+  .icon-mobile-btn {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0.5rem;
+    border-radius: 14px;
+  }
+
+  .icon-mobile-btn .icon-label {
+    display: none;
+  }
+
+  .suggest-icon-btn::before,
+  .edit-icon-btn::before,
+  .delete-icon-btn::before,
+  .add-icon-btn::before {
+    content: '';
+    width: 1.2rem;
+    height: 1.2rem;
+    display: inline-block;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+
+  .suggest-icon-btn::before {
+    background-image: url('assets/icons/suggest.svg');
+  }
+
+  .edit-icon-btn::before {
+    background-image: url('assets/icons/edit-pin.svg');
+  }
+
+  .delete-icon-btn::before {
+    background-image: url('assets/icons/delete.svg');
+  }
+
+  .add-icon-btn::before {
+    background-image: url('assets/icons/add.svg');
+  }
+
   .event-row-top,
   .checkbox-group-list {
     grid-template-columns: 1fr;
