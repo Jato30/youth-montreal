@@ -35,7 +35,10 @@ function addEventRow(eventsList, eventTemplate, state, event = defaultEvent()) {
   node.querySelector('[name="ageGroup"]').value = event.ageGroup || 'all';
   node.querySelector('[name="recurrence"]').value = event.recurrence || 'none';
   node.querySelectorAll('[name="type"]').forEach((checkbox) => checkbox.addEventListener('change', () => updateCheckboxSummary(node, state)));
-  node.querySelector('.remove-event').addEventListener('click', () => node.remove());
+  node.querySelector('.remove-event').addEventListener('click', () => {
+    if (!confirm(t(state, 'deleteEventDraftConfirm'))) return;
+    node.remove();
+  });
   updateCheckboxSummary(node, state);
   eventsList.appendChild(node);
 }
@@ -57,7 +60,10 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
 
   const updateChurchOptions = () => {
     if (!churchOptions) return;
-    churchOptions.innerHTML = state.churches.map((church) => `<option value="${church.name}"></option>`).join('');
+    churchOptions.innerHTML = state.churches
+      .filter((church) => church.hostPasscode || state.isAdminMode)
+      .map((church) => `<option value="${church.name}"></option>`)
+      .join('');
   };
 
   const updateDraftMarker = (lat, lng) => {
@@ -99,9 +105,18 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     clearDraftMarker();
   };
 
+  const syncFormRequirements = (mode) => {
+    const isChurchMode = mode === 'church';
+    ['name', 'address', 'lat', 'lng'].forEach((field) => {
+      const input = elements.churchForm.elements[field];
+      if (input) input.required = isChurchMode;
+    });
+  };
+
   const setEditingMode = (editing, mode = 'church') => {
     state.isEditingChurch = editing;
     state.editorMode = mode;
+    syncFormRequirements(mode);
     state.onMapChurchSelect = editing && mode === 'new-event' ? (church) => selectHostChurch(church) : null;
     document.body.classList.toggle('editing-mode', editing);
     document.body.classList.toggle('church-form-event-mode', editing && mode === 'event');
@@ -188,8 +203,8 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
             <p><strong>${church.name}</strong></p>
             <p>${shortenAddress(church.address) || ''}</p>
             <div class="queue-actions" data-id="${church.id}">
-              <button type="button" data-action="edit">${t(state, 'editPin')}</button>
-              ${state.isAdminMode ? `<button type="button" class="secondary" data-action="delete">${t(state, 'delete')}</button>` : ''}
+              <button type="button" class="icon-mobile-btn edit-icon-btn" data-action="edit" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>
+              ${state.isAdminMode ? `<button type="button" class="secondary icon-mobile-btn delete-icon-btn" data-action="delete" aria-label="${t(state, 'delete')}"><span class="icon-label">${t(state, 'delete')}</span></button>` : ''}
             </div>
           </article>
         `).join('')
@@ -199,22 +214,16 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   const renderEventManager = () => {
     const query = elements.eventManagerSearch?.value.trim().toLowerCase() || '';
     const churches = state.isHostMode ? state.churches.filter((church) => church.id === state.hostChurchId) : state.churches;
-    const today = new Date();
-    const rangeEnd = new Date(today);
-    const mode = state.workspaceEventMode || 'daily';
-    if (mode === 'daily') rangeEnd.setDate(today.getDate() + 3);
-    if (mode === 'weekly') rangeEnd.setDate(today.getDate() + 7);
-    if (mode === 'monthly') rangeEnd.setMonth(today.getMonth() + 1);
+    const today = new Date().toISOString().slice(0, 10);
 
     const rows = churches
       .flatMap((church) => (church.events || []).map((event, eventIndex) => ({ church, event, eventIndex })))
       .filter(({ church, event }) => {
-        const eventDate = new Date(`${event.date}T${event.time || '00:00'}`);
-        return eventDate >= today && eventDate <= rangeEnd && `${church.name} ${event.title || ''} ${event.type}`.toLowerCase().includes(query);
+        return event.date >= today && `${church.name} ${event.title || ''} ${event.type}`.toLowerCase().includes(query);
       })
       .sort((a, b) => `${a.event.date}${a.event.time}`.localeCompare(`${b.event.date}${b.event.time}`));
 
-    const pageSize = mode === 'daily' ? 5 : 8;
+    const pageSize = 8;
     const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
     state.workspaceEventsPage = Math.min(state.workspaceEventsPage || 1, totalPages);
     const start = ((state.workspaceEventsPage || 1) - 1) * pageSize;
@@ -231,8 +240,8 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
             <p>${event.type}</p>
             <p>${church.name} — ${event.date} ${event.time}</p>
             <div class="queue-actions" data-id="${church.id}" data-event-index="${eventIndex}">
-              <button type="button" data-action="edit-event">${t(state, 'editPin')}</button>
-              <button type="button" class="secondary" data-action="delete-event">${t(state, 'delete')}</button>
+              <button type="button" class="icon-mobile-btn edit-icon-btn" data-action="edit-event" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>
+              <button type="button" class="secondary icon-mobile-btn delete-icon-btn" data-action="delete-event" aria-label="${t(state, 'delete')}"><span class="icon-label">${t(state, 'delete')}</span></button>
             </div>
           </article>
         `).join('')
@@ -377,6 +386,11 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     state.auditLog = await appendAuditLog({ action: index >= 0 ? 'church_updated' : 'church_created', label: church.name });
   };
 
+  const saveChurchesWithFeedback = async () => {
+    await saveChurches(state.churches);
+    return true;
+  };
+
   elements.addChurchButton.addEventListener('click', () => startEditChurch());
 
   elements.toggleHost.addEventListener('click', () => {
@@ -453,15 +467,6 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     renderEventManager();
   });
 
-  elements.workspaceEventModeButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      state.workspaceEventMode = button.dataset.workspaceEventMode;
-      state.workspaceEventsPage = 1;
-      elements.workspaceEventModeButtons.forEach((item) => item.classList.toggle('active', item === button));
-      renderEventManager();
-    });
-  });
-
   elements.workspaceEventsPrev.addEventListener('click', () => {
     state.workspaceEventsPage = Math.max(1, (state.workspaceEventsPage || 1) - 1);
     renderEventManager();
@@ -496,8 +501,9 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     }
 
     if (button.dataset.action === 'delete' && state.isAdminMode) {
+      if (!confirm(`${t(state, 'deleteChurchConfirm')} ${churchId}?`)) return;
       state.churches = state.churches.filter((item) => item.id !== churchId);
-      await saveChurches(state.churches);
+      if (!await saveChurchesWithFeedback()) return;
       state.auditLog = await appendAuditLog({ action: 'church_deleted', label: churchId });
       renderMarkers();
       renderChurchManager();
@@ -521,8 +527,9 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     }
 
     if (button.dataset.action === 'delete-event') {
+      if (!confirm(t(state, 'deleteEventConfirm'))) return;
       church.events.splice(eventIndex, 1);
-      await saveChurches(state.churches);
+      if (!await saveChurchesWithFeedback()) return;
       state.auditLog = await appendAuditLog({ action: 'event_deleted', label: church.name });
       renderEventManager();
       renderMarkers();
@@ -566,7 +573,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
           whatsapp: '',
           events: []
         });
-        await saveChurches(state.churches);
+        if (!await saveChurchesWithFeedback()) return;
       }
       state.hostRequests = await updateHostRequestStatus(id, status === 'approved' ? 'approved' : status);
       if (generatedHostCode) {
@@ -596,8 +603,9 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     if (state.editorMode === 'event') {
       const eventIndex = Number(elements.churchForm.elements.eventIndex.value);
       if (Number.isInteger(eventIndex) && eventIndex >= 0 && eventIndex < church.events.length) {
+        if (!confirm(t(state, 'deleteEventConfirm'))) return;
         church.events.splice(eventIndex, 1);
-        await saveChurches(state.churches);
+        if (!await saveChurchesWithFeedback()) return;
         state.auditLog = await appendAuditLog({ action: 'event_deleted', label: church.name });
         renderEventManager();
         renderMarkers();
@@ -608,8 +616,9 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       return;
     }
 
+    if (!confirm(`${t(state, 'deleteChurchConfirm')} ${church.name}?`)) return;
     state.churches = state.churches.filter((item) => item.id !== churchId);
-    await saveChurches(state.churches);
+    if (!await saveChurchesWithFeedback()) return;
     state.auditLog = await appendAuditLog({ action: 'church_deleted', label: church.name });
     renderMarkers();
     renderChurchManager();
@@ -648,7 +657,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
         return;
       }
       church.events.push(nextEvent);
-      await saveChurches(state.churches);
+      if (!await saveChurchesWithFeedback()) return;
       state.auditLog = await appendAuditLog({ action: 'event_created', label: `${church.name}:${nextEvent.title}` });
       renderMarkers();
       renderChurchManager();
@@ -687,7 +696,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       else church.events.push(nextEvent);
       const churchIndex = state.churches.findIndex((item) => item.id === church.id);
       if (churchIndex >= 0) state.churches[churchIndex] = church;
-      await saveChurches(state.churches);
+      if (!await saveChurchesWithFeedback()) return;
       state.auditLog = await appendAuditLog({ action: churchIndex >= 0 && eventIndex < existingEvents.length ? 'event_updated' : 'event_created', label: `${church.name}:${nextEvent.title}` });
       renderMarkers();
       renderChurchManager();
@@ -711,7 +720,6 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
 
   addEventRow(elements.eventsList, elements.eventTemplate, state);
   updateChurchOptions();
-  state.workspaceEventMode = 'daily';
   state.workspaceEventsPage = 1;
   setWorkspaceVisibility();
   renderChurchManager();
