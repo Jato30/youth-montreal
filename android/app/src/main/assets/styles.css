@@ -1520,3 +1520,27 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
     grid-column: 1 / -1;
   }
 }
+
+/* Flatten inner gathering card: keep only parent Gatherings container visual frame. */
+.event-editor-block {
+  border-radius: 22px;
+}
+
+.event-editor-block .event-row {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.event-editor-block #events-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.event-editor-block .event-row + .event-row {
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem !important;
+}

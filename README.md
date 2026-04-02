@@ -68,6 +68,7 @@ The mobile button CSS uses those files directly (`styles.css`), instead of embed
   - top row with three direct fields: `Event title`, `From`, `at`,
   - line break before `Event type` block (event type should not sit on the same row as date/time on desktop),
   - `Age group` + `Repeats` grouped in `.event-row-meta-grid`.
+  - no extra inner bordered card for each gathering row; visual frame belongs to parent `Gatherings` region only.
 - Admin church form grouping on desktop:
   - `Google Maps pin URL + Google Place ID + Latitude + Longitude`
   - `Website + Instagram + Facebook (+ WhatsApp kept on same social row grid)`
