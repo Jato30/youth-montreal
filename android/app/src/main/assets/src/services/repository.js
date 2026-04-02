@@ -72,10 +72,10 @@ async function saveList(resource, localKey, list) {
 export async function loadChurches() {
   if (hasRemote()) {
     try {
-      const data = await remoteGet('hosts');
-      if (Array.isArray(data?.hosts)) {
-        saveLocalChurches(data.hosts);
-        return data.hosts;
+      const data = await remoteGet('churches');
+      if (Array.isArray(data?.churches)) {
+        saveLocalChurches(data.churches);
+        return data.churches;
       }
     } catch {
       // fallback to local cache
@@ -84,11 +84,11 @@ export async function loadChurches() {
   return loadLocalChurches();
 }
 
-export async function saveChurches(hosts) {
-  saveLocalChurches(hosts);
+export async function saveChurches(churches) {
+  saveLocalChurches(churches);
   if (hasRemote()) {
     try {
-      await remotePost('hosts', hosts);
+      await remotePost('churches', churches);
     } catch {
       // keep local even if remote fails
     }

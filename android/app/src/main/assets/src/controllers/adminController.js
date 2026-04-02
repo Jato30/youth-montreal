@@ -718,5 +718,5 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   renderEventManager();
   renderModeration();
 
-  return { startEditChurch, renderChurchManager, renderEventManager, renderModeration };
+  return { startEditChurch, renderChurchManager, renderModeration };
 }

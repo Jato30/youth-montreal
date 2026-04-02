@@ -54,9 +54,10 @@ a {
   position: sticky;
   top: 0;
   z-index: 2000;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 1.5rem;
   padding: calc(0.6rem + var(--safe-top)) clamp(1.1rem, 2vw, 2rem) 0.6rem;
   background: rgba(251, 250, 247, 0.95);
   backdrop-filter: blur(20px);
@@ -75,7 +76,6 @@ a {
   padding: 0.1rem 1rem 0.1rem 0;
   text-decoration: none;
   color: #000;
-  flex-shrink: 0;
 }
 
 .brand-logo {
@@ -108,16 +108,16 @@ a {
 .header-menu-container {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  flex-grow: 1;
   justify-content: space-between;
+  gap: clamp(1rem, 2.5vw, 2.25rem);
+  min-width: 0;
 }
 
 .header-nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .header-nav a {
@@ -127,7 +127,6 @@ a {
   color: var(--muted);
   font-weight: 600;
   transition: background-color 0.2s ease, color 0.2s ease;
-  white-space: nowrap;
 }
 
 .header-nav a:hover,
@@ -140,20 +139,16 @@ a {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
 
 .language-picker {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
   font-size: 0.82rem;
   font-weight: 700;
-}
-
-.language-picker select {
-  width: auto;
-  padding: 0.4rem 0.6rem;
 }
 
 .menu-toggle {
@@ -204,10 +199,10 @@ a {
 .site-header.menu-open .hamburger-icon::before { transform: rotate(45deg); top: 0; }
 .site-header.menu-open .hamburger-icon::after { transform: rotate(-45deg); top: 0; }
 
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .site-header {
-    display: grid;
     grid-template-columns: 1fr auto;
+    gap: 0.5rem;
   }
 
   .menu-toggle {
@@ -228,7 +223,6 @@ a {
     box-shadow: -10px 0 40px rgba(27, 39, 58, 0.15);
     z-index: 2001;
     overflow-y: auto;
-    justify-content: flex-start;
   }
 
   .site-header.menu-open .header-menu-container {
@@ -261,11 +255,6 @@ a {
   }
 
   .language-picker {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .language-picker select {
     width: 100%;
   }
 }

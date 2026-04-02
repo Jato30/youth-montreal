@@ -205,7 +205,6 @@ const renderDetails = (church, onEdit) => {
 let startEditChurch = () => {};
 let renderModeration = () => {};
 let renderChurchManager = () => {};
-let renderEventManager = () => {};
 
 async function deleteCalendarEvent(row) {
   const church = state.churches.find((item) => item.id === row.churchId);
@@ -504,42 +503,17 @@ function setupAutoSync() {
     // Only auto-sync if we are NOT in the middle of editing something
     if (document.body.classList.contains('editing-mode')) return;
 
-    // 1. Sync Churches
     const remoteChurches = await loadChurches();
+
+    // Check if anything actually changed
     if (JSON.stringify(remoteChurches) !== JSON.stringify(state.churches)) {
       state.churches = remoteChurches;
       rerenderMarkers();
       updateCalendarList();
       renderChurchManager();
-      renderEventManager();
-
-      // Refresh details if open
-      if (state.selectedChurchId) {
-        const church = state.churches.find(c => c.id === state.selectedChurchId);
-        if (church) renderDetails(church, startEditChurch);
-      }
-      console.log('Live sync: Churches updated.');
+      console.log('Live sync: Data updated from remote.');
     }
-
-    // 2. Sync Moderation (if admin/host)
-    if (state.isAdminMode || state.isHostMode) {
-      const remoteSuggestions = await loadSuggestions();
-      if (JSON.stringify(remoteSuggestions) !== JSON.stringify(state.suggestions)) {
-        state.suggestions = remoteSuggestions;
-        renderModeration();
-        console.log('Live sync: Suggestions updated.');
-      }
-
-      if (state.isAdminMode) {
-        const remoteHostRequests = await loadHostRequests();
-        if (JSON.stringify(remoteHostRequests) !== JSON.stringify(state.hostRequests)) {
-          state.hostRequests = remoteHostRequests;
-          renderModeration();
-          console.log('Live sync: Host requests updated.');
-        }
-      }
-    }
-  }, 15000); // Check every 15 seconds for snappier refresh
+  }, 60000); // Check every 60 seconds
 }
 
 async function init() {
@@ -558,7 +532,6 @@ async function init() {
   startEditChurch = adminController.startEditChurch;
   renderModeration = adminController.renderModeration;
   renderChurchManager = adminController.renderChurchManager;
-  renderEventManager = adminController.renderEventManager;
 
   const finderController = attachFinderController({
     state,
@@ -576,7 +549,6 @@ async function init() {
       if (church) renderDetails(church, startEditChurch);
       renderModeration();
       renderChurchManager();
-      renderEventManager();
       renderAuditLog();
     });
   });
@@ -599,7 +571,6 @@ async function init() {
     if (church) renderDetails(church, startEditChurch);
     renderModeration();
     renderChurchManager();
-    renderEventManager();
     renderAuditLog();
   });
   resetMapView(map);
