@@ -76,17 +76,21 @@ async function remoteGet(resource) {
   const url = `${getRemoteUrl()}?resource=${encodeURIComponent(resource)}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Remote GET failed: ${resource}`);
-  return response.json();
+  const data = await response.json();
+  if (data?.error) throw new Error(`Remote GET error: ${data.error}`);
+  return data;
 }
 
 async function remotePost(resource, payload) {
   const response = await fetch(getRemoteUrl(), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    // Use a simple request body to avoid CORS preflight issues with Apps Script web apps.
     body: JSON.stringify({ resource, payload })
   });
   if (!response.ok) throw new Error(`Remote POST failed: ${resource}`);
-  return response.json();
+  const data = await response.json();
+  if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
+  return data;
 }
 
 function readLocalList(key) {

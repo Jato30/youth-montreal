@@ -52,6 +52,11 @@ Most frequent causes:
 
 Quick fix during runtime: click the sync chip and paste the deployed Apps Script URL.
 
+### Apps Script CORS gotcha
+
+For POST writes, this project now sends a **simple request body** (no custom JSON header) to avoid browser CORS preflight failures against Apps Script web apps.  
+If you reintroduce custom `Content-Type: application/json`, some deployments may stop accepting browser writes.
+
 ### Sync indicator in UI
 
 - Header chip shows current status:
