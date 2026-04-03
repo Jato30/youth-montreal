@@ -1178,12 +1178,18 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   width: 100%;
   padding: 1.25rem;
   gap: 1rem;
+  grid-template-columns: 1fr;
+  align-items: stretch;
 }
 
 .event-row-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.event-row-header-actions {
+  justify-content: flex-end;
 }
 
 .event-row-kicker {
@@ -1196,9 +1202,61 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
 
 .event-row-top {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: minmax(220px, 1fr) minmax(240px, 1fr);
   gap: 0.9rem;
   align-items: end;
+}
+
+.admin-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  grid-template-areas:
+    "name name address address"
+    "pin place lat lng"
+    "hint hint hint hint"
+    "langs langs langs langs"
+    "web insta fb wa";
+}
+
+.field-name { grid-area: name; }
+.field-address { grid-area: address; }
+.field-pin-url { grid-area: pin; }
+.field-place-id { grid-area: place; }
+.field-lat { grid-area: lat; }
+.field-lng { grid-area: lng; }
+.field-hint { grid-area: hint; }
+.field-langs { grid-area: langs; }
+.field-web { grid-area: web; }
+.field-insta { grid-area: insta; }
+.field-fb { grid-area: fb; }
+.field-wa { grid-area: wa; }
+
+.event-row-time-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.event-row-time-group label {
+  min-width: 0;
+}
+
+.event-row-time-group input[type="date"],
+.event-row-time-group input[type="time"] {
+  min-width: 0;
+  width: 100%;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  text-overflow: clip;
+  overflow: visible;
+  white-space: nowrap;
+  padding-right: 2rem;
+}
+
+.event-row-meta-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .checkbox-group-list {
@@ -1230,6 +1288,34 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   .event-row-top,
   .checkbox-group-list {
     grid-template-columns: 1fr;
+  }
+
+  .event-row-time-group,
+  .event-row-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-fields-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "name"
+      "address"
+      "pin"
+      "place"
+      "lat"
+      "lng"
+      "hint"
+      "langs"
+      "web"
+      "insta"
+      "fb"
+      "wa";
+  }
+
+  .event-row-time-group input[type="date"],
+  .event-row-time-group input[type="time"] {
+    font-size: 0.88rem;
+    padding-inline: 0.7rem 1.75rem;
   }
 }
 
@@ -1308,4 +1394,63 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   text-transform: uppercase;
   color: var(--brand);
   margin-top: 0.2rem;
+}
+
+/* Final event-editor layout overrides (keep at end to win cascade). */
+.event-row {
+  display: grid;
+  grid-template-columns: 1fr !important;
+  grid-template-areas:
+    "top"
+    "types"
+    "meta"
+    "actions";
+  align-items: stretch;
+}
+
+.event-row-top { grid-area: top; grid-template-columns: minmax(200px, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr); }
+.checkbox-select-list { grid-area: types; }
+.event-row-meta-grid { grid-area: meta; }
+.event-row-actions { grid-area: actions; display: flex; justify-content: flex-start; }
+
+.event-row-top input[type="date"],
+.event-row-top input[type="time"] {
+  min-width: 0;
+  text-overflow: clip;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .event-row-top {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .event-row-top > label:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Flatten inner gathering card: keep only parent Gatherings container visual frame. */
+.event-editor-block {
+  border-radius: 22px;
+}
+
+.event-editor-block .event-row {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.event-editor-block #events-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.event-editor-block .event-row + .event-row {
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem !important;
 }

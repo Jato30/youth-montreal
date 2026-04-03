@@ -46,7 +46,6 @@ export const TRANSLATIONS = {
     eventSaved: 'Event saved successfully.',
     churchName: 'Church name',
     eventTitle: 'Event title',
-    gatheringDetails: 'Gathering details',
     address: 'Address',
     googleMapsPinUrl: 'Google Maps pin URL',
     googlePlaceId: 'Google Place ID (optional)',
@@ -189,7 +188,15 @@ export const TRANSLATIONS = {
     nextPage: 'Next',
     cancel: 'Cancel',
     toggleFilters: 'Filters',
-    today: 'Today'
+    today: 'Today',
+    syncLocalOnly: 'Local only',
+    syncLocalOnlyHint: 'Cloud backend not configured. Data is stored locally on this device.',
+    syncPending: 'Sync pending',
+    syncPendingHint: 'Some changes are not in the cloud yet. Tap to retry sync.',
+    syncUpToDate: 'Cloud synced',
+    syncUpToDateHint: 'All changes are up to date in the cloud database.',
+    syncEndpoint: 'Sync endpoint',
+    enterSyncUrlPrompt: 'Paste your deployed Google Apps Script URL (leave blank to disable cloud sync):'
   },
   'fr-CA': {
     language: 'Langue',
@@ -236,7 +243,6 @@ export const TRANSLATIONS = {
     eventSaved: 'Événement enregistré.',
     churchName: "Nom de l'église",
     eventTitle: 'Titre de l’événement',
-    gatheringDetails: 'Détails de la rencontre',
     address: 'Adresse',
     googleMapsPinUrl: 'URL du point Google Maps',
     googlePlaceId: 'Google Place ID (optionnel)',
@@ -379,7 +385,15 @@ export const TRANSLATIONS = {
     nextPage: 'Suivant',
     cancel: 'Annuler',
     toggleFilters: 'Filtres',
-    today: "Aujourd'hui"
+    today: "Aujourd'hui",
+    syncLocalOnly: 'Local seulement',
+    syncLocalOnlyHint: 'Backend cloud non configuré. Les données sont enregistrées localement sur cet appareil.',
+    syncPending: 'Sync en attente',
+    syncPendingHint: 'Certaines modifications ne sont pas encore dans le cloud. Touchez pour réessayer.',
+    syncUpToDate: 'Cloud à jour',
+    syncUpToDateHint: 'Toutes les modifications sont synchronisées dans la base cloud.',
+    syncEndpoint: 'Endpoint de sync',
+    enterSyncUrlPrompt: 'Collez l’URL déployée de votre Google Apps Script (laissez vide pour désactiver la sync cloud) :'
   }
 };
 

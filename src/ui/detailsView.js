@@ -22,9 +22,9 @@ export function renderChurchDetails({ state, church, detailsElement, emptyStateE
       <p><a href="${googlePlaceLink(church)}" target="_blank" rel="noreferrer">${t(state, 'openMaps')}</a></p>
       ${church.languages?.length ? `<p><strong>${t(state, 'languagesLabel')}</strong> ${church.languages.join(', ')}</p>` : ''}
       <div class="detail-actions-row detail-actions-row-single">
-        <button type="button" class="secondary issue-report-btn" aria-label="${t(state, 'reportIssue')}">!</button>
+        <button type="button" class="secondary issue-report-btn icon-mobile-btn suggest-icon-btn" aria-label="${t(state, 'reportIssue')}"><span class="icon-label">${t(state, 'reportIssue')}</span></button>
         <span class="help-text">${t(state, 'isSomethingWrong')}</span>
-        ${canEdit ? `<button type="button" class="edit-pin-btn">${t(state, 'editPin')}</button>` : ''}
+        ${canEdit ? `<button type="button" class="edit-pin-btn icon-mobile-btn edit-icon-btn" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>` : ''}
       </div>
       <ul>
         ${upcoming.length
