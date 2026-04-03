@@ -6,7 +6,7 @@ const inDays = (count) => {
 };
 
 export const defaultChurches = [
-  {
+  /*{
     id: crypto.randomUUID(),
     hostPasscode: 'H-NVMTL1',
     name: 'Eglise Nouvelle Vie',
@@ -24,8 +24,8 @@ export const defaultChurches = [
       { title: 'Young Adults Prayer Night', date: inDays(1), time: '19:00', type: 'Prayer, Fellowship', ageGroup: 'young-adults', recurrence: 'weekly', until: '' },
       { title: 'Bible Study Group', date: inDays(3), time: '18:30', type: 'Bible study', ageGroup: 'all', recurrence: 'biweekly', until: '' }
     ]
-  },
-  {
+  },*/
+  /*{
     id: crypto.randomUUID(),
     hostPasscode: 'H-LCHAP2',
     name: 'La Chapelle Montréal',
@@ -40,5 +40,5 @@ export const defaultChurches = [
     facebook: 'https://www.facebook.com/lachapelleme/',
     whatsapp: '',
     events: [{ title: 'Youth Fellowship', date: inDays(2), time: '19:30', type: 'Fellowship', ageGroup: 'teens', recurrence: 'monthly', until: '' }]
-  }
+  }*/
 ];

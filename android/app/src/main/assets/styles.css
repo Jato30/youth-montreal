@@ -1073,6 +1073,10 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   gap: 0.75rem;
 }
 
+.event-row-header-actions {
+  justify-content: flex-end;
+}
+
 .event-row-header strong {
   font-size: 1rem;
 }
@@ -1222,10 +1226,6 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   justify-content: space-between;
 }
 
-.event-row-header-actions {
-  justify-content: flex-end;
-}
-
 .event-row-kicker {
   font-size: 0.82rem;
   font-weight: 800;
@@ -1267,9 +1267,6 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
 .field-wa { grid-area: wa; }
 
 .event-row-time-group {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
   min-width: 0;
 }
 
@@ -1287,10 +1284,6 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   overflow: visible;
   white-space: nowrap;
   padding-right: 2rem;
-}
-
-.event-row-meta-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .checkbox-group-list {

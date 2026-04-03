@@ -190,7 +190,9 @@ export const TRANSLATIONS = {
     nextPage: 'Next',
     cancel: 'Cancel',
     toggleFilters: 'Filters',
-    today: 'Today',
+    today: 'Today'
+    ,
+    remoteSaveFailed: 'Saved locally, but cloud sync failed. Check Sheets backend URL/network.',
     syncLocalOnly: 'Local only',
     syncLocalOnlyHint: 'Cloud backend not configured. Data is stored locally on this device.',
     syncPending: 'Sync pending',
@@ -390,6 +392,7 @@ export const TRANSLATIONS = {
     cancel: 'Annuler',
     toggleFilters: 'Filtres',
     today: "Aujourd'hui",
+    remoteSaveFailed: 'Enregistré localement, mais la synchronisation cloud a échoué. Vérifiez l’URL Sheets / le réseau.',
     syncLocalOnly: 'Local seulement',
     syncLocalOnlyHint: 'Backend cloud non configuré. Les données sont enregistrées localement sur cet appareil.',
     syncPending: 'Sync en attente',
