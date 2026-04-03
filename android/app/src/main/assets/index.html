@@ -415,9 +415,6 @@
 
     <template id="event-template">
       <div class="event-row">
-        <div class="event-row-header event-row-header-actions">
-          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event">Remove</button>
-        </div>
         <div class="event-row-top">
           <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
           <div class="event-row-time-group">
@@ -455,6 +452,9 @@
               <option value="monthly">Monthly</option>
             </select>
           </label>
+        </div>
+        <div class="event-row-actions">
+          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event" data-i18n="delete">Delete</button>
         </div>
       </div>
     </template>

@@ -1,5 +1,5 @@
 import { LANGUAGE_KEY, STORAGE_KEY } from './config.js';
-import { appendAuditLog, getSyncState, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, retryPendingSync, saveChurches, subscribeSyncState, submitHostRequest, submitSuggestion } from './services/repository.js';
+import { appendAuditLog, getConfiguredSyncUrl, getSyncState, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, retryPendingSync, saveChurches, setConfiguredSyncUrl, subscribeSyncState, submitHostRequest, submitSuggestion } from './services/repository.js';
 import { createMap, renderMarkers, resetMapView } from './ui/mapView.js';
 import { renderChurchDetails } from './ui/detailsView.js';
 import { attachAdminController } from './controllers/adminController.js';
@@ -313,6 +313,7 @@ function setupSyncStatus() {
 
   const updateSyncStatus = (syncState = getSyncState()) => {
     const { hasRemote, pendingCount } = syncState;
+    const activeUrl = getConfiguredSyncUrl();
     elements.syncStatus.classList.remove('sync-local', 'sync-pending', 'sync-ok');
     if (!hasRemote) {
       elements.syncStatus.classList.add('sync-local');
@@ -323,15 +324,22 @@ function setupSyncStatus() {
     if (pendingCount > 0) {
       elements.syncStatus.classList.add('sync-pending');
       elements.syncStatus.textContent = `${t(state, 'syncPending')} (${pendingCount})`;
-      elements.syncStatus.title = t(state, 'syncPendingHint');
+      elements.syncStatus.title = `${t(state, 'syncPendingHint')}${activeUrl ? `\n${t(state, 'syncEndpoint')}: ${activeUrl}` : ''}`;
       return;
     }
     elements.syncStatus.classList.add('sync-ok');
     elements.syncStatus.textContent = t(state, 'syncUpToDate');
-    elements.syncStatus.title = t(state, 'syncUpToDateHint');
+    elements.syncStatus.title = `${t(state, 'syncUpToDateHint')}${activeUrl ? `\n${t(state, 'syncEndpoint')}: ${activeUrl}` : ''}`;
   };
 
   elements.syncStatus.addEventListener('click', async () => {
+    const syncState = getSyncState();
+    if (!syncState.hasRemote) {
+      const url = prompt(t(state, 'enterSyncUrlPrompt'), getConfiguredSyncUrl() || '');
+      if (url === null) return;
+      setConfiguredSyncUrl(url);
+      if (!String(url || '').trim()) return;
+    }
     await retryPendingSync();
   });
   elements.syncStatus.addEventListener('sync-refresh', () => updateSyncStatus());

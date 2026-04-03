@@ -198,7 +198,9 @@ export const TRANSLATIONS = {
     syncPending: 'Sync pending',
     syncPendingHint: 'Some changes are not in the cloud yet. Tap to retry sync.',
     syncUpToDate: 'Cloud synced',
-    syncUpToDateHint: 'All changes are up to date in the cloud database.'
+    syncUpToDateHint: 'All changes are up to date in the cloud database.',
+    syncEndpoint: 'Sync endpoint',
+    enterSyncUrlPrompt: 'Paste your deployed Google Apps Script URL (leave blank to disable cloud sync):'
   },
   'fr-CA': {
     language: 'Langue',
@@ -396,7 +398,9 @@ export const TRANSLATIONS = {
     syncPending: 'Sync en attente',
     syncPendingHint: 'Certaines modifications ne sont pas encore dans le cloud. Touchez pour réessayer.',
     syncUpToDate: 'Cloud à jour',
-    syncUpToDateHint: 'Toutes les modifications sont synchronisées dans la base cloud.'
+    syncUpToDateHint: 'Toutes les modifications sont synchronisées dans la base cloud.',
+    syncEndpoint: 'Endpoint de sync',
+    enterSyncUrlPrompt: 'Collez l’URL déployée de votre Google Apps Script (laissez vide pour désactiver la sync cloud) :'
   }
 };
 

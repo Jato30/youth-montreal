@@ -5,18 +5,35 @@ const SUGGESTIONS_KEY = 'youth-montreal-suggestions';
 const HOST_REQUESTS_KEY = 'youth-montreal-host-requests';
 const AUDIT_LOG_KEY = 'youth-montreal-audit-log';
 const PENDING_SYNC_KEY = 'youth-montreal-pending-sync';
+const SYNC_URL_KEY = 'youth-montreal-sheets-url';
 const syncListeners = new Set();
 
 function getRemoteUrl() {
   if (SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim()) return SHEETS_WEB_APP_URL.trim();
   if (typeof window !== 'undefined') {
-    const runtimeUrl = window.__SHEETS_WEB_APP_URL__ || localStorage.getItem('youth-montreal-sheets-url');
+    const runtimeUrl = window.__SHEETS_WEB_APP_URL__ || localStorage.getItem(SYNC_URL_KEY);
     if (runtimeUrl && runtimeUrl.trim()) return runtimeUrl.trim();
   }
   return '';
 }
 
 const hasRemote = () => Boolean(getRemoteUrl());
+
+export function getConfiguredSyncUrl() {
+  return getRemoteUrl();
+}
+
+export function setConfiguredSyncUrl(url) {
+  const value = String(url || '').trim();
+  if (typeof window === 'undefined') return;
+  if (!value) {
+    localStorage.removeItem(SYNC_URL_KEY);
+    emitSyncState();
+    return;
+  }
+  localStorage.setItem(SYNC_URL_KEY, value);
+  emitSyncState();
+}
 
 function readPendingSync() {
   try {

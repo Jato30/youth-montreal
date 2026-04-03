@@ -41,6 +41,17 @@ To share changes across devices, configure a valid Apps Script endpoint:
 
 If remote sync is configured but unreachable, the app now keeps the local save and shows a cloud-sync failure message so admins/hosts know data was not pushed to the shared backend.
 
+### Common “DB not updating” root cause
+
+If the web app shows **Local only**, no remote endpoint is active for that browser session.  
+Most frequent causes:
+
+1. `src/config.js` still has an empty `SHEETS_WEB_APP_URL`.
+2. Endpoint is set only in Android asset config, while you are testing the web build.
+3. Endpoint URL is missing/invalid in local runtime storage.
+
+Quick fix during runtime: click the sync chip and paste the deployed Apps Script URL.
+
 ### Sync indicator in UI
 
 - Header chip shows current status:
@@ -68,6 +79,7 @@ The mobile button CSS uses those files directly (`styles.css`), instead of embed
   - top row with three direct fields: `Event title`, `From`, `at`,
   - line break before `Event type` block (event type should not sit on the same row as date/time on desktop),
   - `Age group` + `Repeats` grouped in `.event-row-meta-grid`.
+  - row delete action positioned at the bottom action row (`.event-row-actions`), close to the `+ Add gathering` control area.
   - no extra inner bordered card for each gathering row; visual frame belongs to parent `Gatherings` region only.
 - Admin church form grouping on desktop:
   - `Google Maps pin URL + Google Place ID + Latitude + Longitude`

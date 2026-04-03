@@ -1484,17 +1484,17 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   display: grid;
   grid-template-columns: 1fr !important;
   grid-template-areas:
-    "actions"
     "top"
     "types"
-    "meta";
+    "meta"
+    "actions";
   align-items: stretch;
 }
 
-.event-row-header { grid-area: actions; justify-content: flex-start; }
 .event-row-top { grid-area: top; grid-template-columns: minmax(200px, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr); }
 .checkbox-select-list { grid-area: types; }
 .event-row-meta-grid { grid-area: meta; }
+.event-row-actions { grid-area: actions; display: flex; justify-content: flex-start; }
 
 .event-row-top input[type="date"],
 .event-row-top input[type="time"] {
