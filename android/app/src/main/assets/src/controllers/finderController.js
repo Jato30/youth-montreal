@@ -27,9 +27,9 @@ export function attachFinderController({ state, map, elements, renderMarkers, re
         renderMarkers();
         return null;
       }
-      point = { ...match, query: match.fullAddress };
+      point = { ...match, query: match.shortAddress || match.fullAddress };
       state.lastFinderPoint = point;
-      elements.finderForm.elements.address.value = match.fullAddress;
+      elements.finderForm.elements.address.value = match.shortAddress || match.fullAddress;
     }
 
     const matches = state.churches.filter((church) => haversineKm(point.lat, point.lng, Number(church.lat), Number(church.lng)) <= radiusKm);
@@ -61,7 +61,7 @@ export function attachFinderController({ state, map, elements, renderMarkers, re
     state.lastFinderPoint = null;
     const matches = await searchMontrealAddresses(event.target.value, 6);
     if (!matches.length || !addressList) return;
-    addressList.innerHTML = matches.map((item) => `<option value="${item.fullAddress}"></option>`).join('');
+    addressList.innerHTML = matches.map((item) => `<option value="${item.shortAddress || item.fullAddress}"></option>`).join('');
   });
 
   elements.finderForm.elements.address.addEventListener('change', () => applyLocationFilter({ shouldGeocode: true }));

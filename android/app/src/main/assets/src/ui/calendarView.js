@@ -76,7 +76,6 @@ function renderActionButtons(rowIndex, state, row) {
     <div class="finder-actions compact-actions">
       <button type="button" class="secondary calendar-suggest-btn icon-mobile-btn suggest-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'suggestEventUpdate')}"><span class="icon-label">${t(state, 'suggestEventUpdate')}</span></button>
       ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-edit-btn icon-mobile-btn edit-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>` : ''}
-      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-delete-btn icon-mobile-btn delete-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'delete')}"><span class="icon-label">${t(state, 'delete')}</span></button>` : ''}
     </div>
   `;
 }
@@ -267,11 +266,4 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
     });
   });
 
-  elements.calendarList.querySelectorAll('.calendar-delete-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const row = rows[Number(button.dataset.rowIndex)];
-      if (!row || !canManage(state, row.churchId)) return;
-      onDeleteEvent?.(row);
-    });
-  });
 }

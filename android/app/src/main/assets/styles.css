@@ -1195,6 +1195,10 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   gap: 0.45rem;
 }
 
+.toggle-search-label {
+  display: none;
+}
+
 .issue-report-btn:hover {
   background: rgba(255, 230, 233, 1);
 }
@@ -1353,7 +1357,7 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   }
 
   .suggest-icon-btn::before {
-    background-image: url('assets/icons/suggest.svg');
+    background-image: url('assets/icons/report.svg');
   }
 
   .edit-icon-btn::before {
@@ -1557,7 +1561,13 @@ body.editing-mode .workspace-grid > .workspace-column:first-child {
   font-size: 0.82rem;
 }
 input[type="date"],
-input[type="time"] { padding-right: 2.6rem; }
+input[type="time"] { padding-right: 3.25rem; }
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  margin-left: 0.45rem;
+  transform: translateX(4px);
+}
 
 .app-loading-overlay {
   position: fixed;
@@ -1581,7 +1591,12 @@ input[type="time"] { padding-right: 2.6rem; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 900px) {
-  .icon-mobile-btn::before { content: '●'; }
+  .icon-mobile-btn::before {
+    content: '•';
+    width: 1rem;
+    text-align: center;
+    display: inline-block;
+  }
   .audit-hardening-toolbar .finder-actions { gap: 0.35rem; }
   .audit-hardening-toolbar .finder-actions button,
   .audit-hardening-toolbar .finder-actions .file-input-label { padding: 0.55rem 0.7rem; }

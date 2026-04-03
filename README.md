@@ -75,12 +75,20 @@ If cloud calls stall/fail, the UI falls back to available local data instead of 
 
 Mobile action icons are now regular files so you can tweak them anytime:
 
-- `assets/icons/suggest.svg`
+- `assets/icons/report.svg`
 - `assets/icons/edit-pin.svg`
 - `assets/icons/delete.svg`
 - `assets/icons/add.svg`
 
 The mobile button CSS uses those files directly (`styles.css`), instead of embedded data-URI SVG blobs.
+
+## Address normalization rules (web + app)
+
+- All church/address autocomplete flows now store and re-fill compact addresses in this format:
+  - `unit-streetNumber streetNameAbbrev, City, PostalCode`
+  - Example: `104-515 Rue Cherrier, Montreal, H2L 1H2`
+- Address reverse geocoding and typed search both map to this compact format before persisting.
+- Church cards and event rows render shortened addresses via `shortenAddress(...)` so overlong provider strings do not leak into the UI.
 
 ## Event editor layout notes (web + Android asset parity)
 

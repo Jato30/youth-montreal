@@ -137,15 +137,16 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     if (!list) return;
     const matches = await searchMontrealAddresses(query, 6);
     if (!matches.length) return;
-    list.innerHTML = matches.map((item) => `<option value="${item.fullAddress}"></option>`).join('');
+    list.innerHTML = matches.map((item) => `<option value="${item.shortAddress || item.fullAddress}"></option>`).join('');
   };
 
   const applyAddressMatch = (match) => {
     if (!match) return;
-    elements.churchForm.elements.address.value = normalizeAddress(match.fullAddress);
+    const compactAddress = match.shortAddress || normalizeAddress(match.fullAddress);
+    elements.churchForm.elements.address.value = compactAddress;
     elements.churchForm.elements.lat.value = Number(match.lat).toFixed(6);
     elements.churchForm.elements.lng.value = Number(match.lng).toFixed(6);
-    elements.churchForm.elements.googleMapsUrl.value = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.fullAddress)}`;
+    elements.churchForm.elements.googleMapsUrl.value = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(compactAddress)}`;
     updateDraftMarker(match.lat, match.lng);
   };
 

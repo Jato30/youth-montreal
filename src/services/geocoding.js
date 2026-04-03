@@ -1,11 +1,19 @@
+import { compactAddressFromParts } from '../utils/address.js';
+
 function normalizeAddressResult(item) {
   const address = item.address || {};
-  const houseNumber = address.house_number || '';
+  const displayPrefix = String(item.display_name || '').split(',')[0]?.trim() || '';
+  const houseNumber = address.house_number || displayPrefix.match(/(\d+\s*-\s*)?\d+[A-Za-z]?\b/)?.[0] || '';
   const road = address.road || address.pedestrian || address.footway || '';
   const city = address.city || address.town || address.village || address.municipality || 'Montreal';
   const postcode = address.postcode || '';
   const fullAddress = item.display_name || [houseNumber, road, city, postcode, 'Canada'].filter(Boolean).join(', ');
-  const shortAddress = [houseNumber, road].filter(Boolean).join(' ').trim();
+  const shortAddress = compactAddressFromParts({
+    unitStreet: houseNumber,
+    road,
+    city,
+    postcode
+  });
 
   return {
     lat: Number(item.lat),
