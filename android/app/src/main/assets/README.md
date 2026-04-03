@@ -52,6 +52,28 @@ Most frequent causes:
 
 Quick fix during runtime: click the sync chip and paste the deployed Apps Script URL.
 
+### Sync blocked by remote endpoint failures (diagnosis)
+
+If a broken URL or unavailable Apps Script endpoint is configured, startup can feel blocked while each remote resource times out.
+
+Mitigations now in place:
+
+- Cloud reads are requested in parallel during startup (instead of sequentially), so fallback to local cache is much faster when remote is down.
+- After a remote timeout/error, sync attempts enter a short cooldown window before retrying, preventing repeated timeout loops.
+- Manual retry still works from the sync chip and clears the cooldown immediately.
+
+### Apps Script resource mapping requirement
+
+The frontend syncs using resources: `churches`, `suggestions`, and `hostRequests`.
+
+Your Apps Script backend must map those resources to sheet tabs:
+
+- `churches` -> `hosts`
+- `suggestions` -> `reports`
+- `hostRequests` -> `hostRequests`
+
+Without this mapping, reads/writes fail for `churches` and `suggestions`, leaving the app in perpetual pending sync.
+
 ### Apps Script CORS gotcha
 
 For POST writes, this project now sends a **simple request body** (no custom JSON header) to avoid browser CORS preflight failures against Apps Script web apps.  

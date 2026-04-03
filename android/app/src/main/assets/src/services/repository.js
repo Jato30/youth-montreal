@@ -8,6 +8,8 @@ const PENDING_SYNC_KEY = 'youth-montreal-pending-sync';
 const SYNC_URL_KEY = 'youth-montreal-sheets-url';
 const syncListeners = new Set();
 const REMOTE_TIMEOUT_MS = 8000;
+const REMOTE_COOLDOWN_MS = 30000;
+let remoteBlockedUntil = 0;
 
 let lastSyncError = null;
 
@@ -21,6 +23,7 @@ function getRemoteUrl() {
 }
 
 const hasRemote = () => Boolean(getRemoteUrl());
+const canAttemptRemote = () => hasRemote() && Date.now() >= remoteBlockedUntil;
 
 export function getConfiguredSyncUrl() {
   return getRemoteUrl();
@@ -86,9 +89,11 @@ async function remoteGet(resource) {
     const data = await response.json();
     if (data?.error) throw new Error(`Remote GET error: ${data.error}`);
     lastSyncError = null;
+    remoteBlockedUntil = 0;
     return data;
   } catch (err) {
     lastSyncError = err.message || String(err);
+    remoteBlockedUntil = Date.now() + REMOTE_COOLDOWN_MS;
     throw err;
   }
 }
@@ -106,9 +111,11 @@ async function remotePost(resource, payload) {
     const data = await response.json();
     if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
     lastSyncError = null;
+    remoteBlockedUntil = 0;
     return data;
   } catch (err) {
     lastSyncError = err.message || String(err);
+    remoteBlockedUntil = Date.now() + REMOTE_COOLDOWN_MS;
     throw err;
   }
 }
@@ -134,7 +141,7 @@ function normalizeEntry(entry) {
 }
 
 async function loadList(resource, localKey) {
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       const data = await remoteGet(resource);
       const list = Array.isArray(data?.[resource]) ? data[resource].map(normalizeEntry) : [];
@@ -149,7 +156,7 @@ async function loadList(resource, localKey) {
 
 async function saveList(resource, localKey, list) {
   writeLocalList(localKey, list);
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       await remotePost(resource, list);
       clearPending(resource);
@@ -160,7 +167,7 @@ async function saveList(resource, localKey, list) {
 }
 
 export async function loadChurches() {
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       const data = await remoteGet('churches');
       if (Array.isArray(data?.churches)) {
@@ -176,7 +183,7 @@ export async function loadChurches() {
 
 export async function saveChurches(churches) {
   saveLocalChurches(churches);
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       await remotePost('churches', churches);
       clearPending('churches');
@@ -187,6 +194,7 @@ export async function saveChurches(churches) {
 }
 
 export async function retryPendingSync() {
+  remoteBlockedUntil = 0;
   if (!hasRemote()) return getSyncState();
   const pending = readPendingSync();
   const entries = Object.entries(pending);

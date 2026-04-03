@@ -8,6 +8,8 @@ const PENDING_SYNC_KEY = 'youth-montreal-pending-sync';
 const SYNC_URL_KEY = 'youth-montreal-sheets-url';
 const syncListeners = new Set();
 const REMOTE_TIMEOUT_MS = 8000;
+const REMOTE_COOLDOWN_MS = 30000;
+let remoteBlockedUntil = 0;
 
 function getRemoteUrl() {
   if (SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim()) return SHEETS_WEB_APP_URL.trim();
@@ -19,6 +21,7 @@ function getRemoteUrl() {
 }
 
 const hasRemote = () => Boolean(getRemoteUrl());
+const canAttemptRemote = () => hasRemote() && Date.now() >= remoteBlockedUntil;
 
 export function getConfiguredSyncUrl() {
   return getRemoteUrl();
@@ -77,26 +80,38 @@ async function remoteGet(resource) {
   const url = `${getRemoteUrl()}?resource=${encodeURIComponent(resource)}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REMOTE_TIMEOUT_MS);
-  const response = await fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
-  if (!response.ok) throw new Error(`Remote GET failed: ${resource}`);
-  const data = await response.json();
-  if (data?.error) throw new Error(`Remote GET error: ${data.error}`);
-  return data;
+  try {
+    const response = await fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+    if (!response.ok) throw new Error(`Remote GET failed: ${resource}`);
+    const data = await response.json();
+    if (data?.error) throw new Error(`Remote GET error: ${data.error}`);
+    remoteBlockedUntil = 0;
+    return data;
+  } catch (error) {
+    remoteBlockedUntil = Date.now() + REMOTE_COOLDOWN_MS;
+    throw error;
+  }
 }
 
 async function remotePost(resource, payload) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REMOTE_TIMEOUT_MS);
-  const response = await fetch(getRemoteUrl(), {
-    method: 'POST',
-    // Use a simple request body to avoid CORS preflight issues with Apps Script web apps.
-    body: JSON.stringify({ resource, payload }),
-    signal: controller.signal
-  }).finally(() => clearTimeout(timer));
-  if (!response.ok) throw new Error(`Remote POST failed: ${resource}`);
-  const data = await response.json();
-  if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
-  return data;
+  try {
+    const response = await fetch(getRemoteUrl(), {
+      method: 'POST',
+      // Use a simple request body to avoid CORS preflight issues with Apps Script web apps.
+      body: JSON.stringify({ resource, payload }),
+      signal: controller.signal
+    }).finally(() => clearTimeout(timer));
+    if (!response.ok) throw new Error(`Remote POST failed: ${resource}`);
+    const data = await response.json();
+    if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
+    remoteBlockedUntil = 0;
+    return data;
+  } catch (error) {
+    remoteBlockedUntil = Date.now() + REMOTE_COOLDOWN_MS;
+    throw error;
+  }
 }
 
 function readLocalList(key) {
@@ -120,7 +135,7 @@ function normalizeEntry(entry) {
 }
 
 async function loadList(resource, localKey) {
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       const data = await remoteGet(resource);
       const list = Array.isArray(data?.[resource]) ? data[resource].map(normalizeEntry) : [];
@@ -135,7 +150,7 @@ async function loadList(resource, localKey) {
 
 async function saveList(resource, localKey, list) {
   writeLocalList(localKey, list);
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       await remotePost(resource, list);
       clearPending(resource);
@@ -146,7 +161,7 @@ async function saveList(resource, localKey, list) {
 }
 
 export async function loadChurches() {
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       const data = await remoteGet('churches');
       if (Array.isArray(data?.churches)) {
@@ -162,7 +177,7 @@ export async function loadChurches() {
 
 export async function saveChurches(churches) {
   saveLocalChurches(churches);
-  if (hasRemote()) {
+  if (canAttemptRemote()) {
     try {
       await remotePost('churches', churches);
       clearPending('churches');
@@ -173,6 +188,7 @@ export async function saveChurches(churches) {
 }
 
 export async function retryPendingSync() {
+  remoteBlockedUntil = 0;
   if (!hasRemote()) return getSyncState();
   const pending = readPendingSync();
   const entries = Object.entries(pending);

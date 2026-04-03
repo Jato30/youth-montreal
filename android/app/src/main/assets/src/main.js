@@ -619,10 +619,16 @@ async function init() {
       new Promise((resolve) => setTimeout(resolve, 9000))
     ]);
 
-    state.churches = await loadChurches();
-    state.suggestions = await loadSuggestions();
-    state.hostRequests = await loadHostRequests();
-    state.auditLog = await loadAuditLog();
+    const [churches, suggestions, hostRequests, auditLog] = await Promise.all([
+      loadChurches(),
+      loadSuggestions(),
+      loadHostRequests(),
+      loadAuditLog()
+    ]);
+    state.churches = churches;
+    state.suggestions = suggestions;
+    state.hostRequests = hostRequests;
+    state.auditLog = auditLog;
 
     const adminController = attachAdminController({
       state,
