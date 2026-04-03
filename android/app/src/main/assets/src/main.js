@@ -1,5 +1,5 @@
 import { LANGUAGE_KEY, STORAGE_KEY } from './config.js';
-import { appendAuditLog, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, saveChurches, submitHostRequest, submitSuggestion } from './services/repository.js';
+import { appendAuditLog, getSyncState, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, retryPendingSync, saveChurches, subscribeSyncState, submitHostRequest, submitSuggestion } from './services/repository.js';
 import { createMap, renderMarkers, resetMapView } from './ui/mapView.js';
 import { renderChurchDetails } from './ui/detailsView.js';
 import { attachAdminController } from './controllers/adminController.js';
@@ -89,7 +89,8 @@ const elements = {
   calendarDayNav: document.querySelector('#calendar-day-nav'),
   calPrevDay: document.querySelector('#cal-prev-day'),
   calToday: document.querySelector('#cal-today'),
-  calNextDay: document.querySelector('#cal-next-day')
+  calNextDay: document.querySelector('#cal-next-day'),
+  syncStatus: document.querySelector('#sync-status')
 };
 
 const state = {
@@ -205,15 +206,20 @@ const renderDetails = (church, onEdit) => {
 let startEditChurch = () => {};
 let renderModeration = () => {};
 let renderChurchManager = () => {};
-let renderEventManager = () => {};
 
 async function deleteCalendarEvent(row) {
+  if (!confirm(t(state, 'deleteEventConfirm'))) return;
   const church = state.churches.find((item) => item.id === row.churchId);
   if (!church) return;
   const index = Number.isInteger(row.eventIndex) ? row.eventIndex : (church.events || []).findIndex((event) => event.date === row.date && event.time === row.time && event.type === row.type);
   if (index < 0) return;
   church.events.splice(index, 1);
-  await saveChurches(state.churches);
+  try {
+    await saveChurches(state.churches);
+  } catch {
+    elements.workspaceStatus.textContent = t(state, 'remoteSaveFailed');
+    return;
+  }
   state.auditLog = await appendAuditLog({ action: 'event_deleted', label: `${church.name}:${row.type}` });
   rerenderMarkers();
   renderAuditLog();
@@ -300,6 +306,37 @@ function setupCalendar() {
 
   elements.calendarMode = { value: 'daily' };
   elements.calendarDayNav.classList.remove('hidden');
+}
+
+function setupSyncStatus() {
+  if (!elements.syncStatus) return;
+
+  const updateSyncStatus = (syncState = getSyncState()) => {
+    const { hasRemote, pendingCount } = syncState;
+    elements.syncStatus.classList.remove('sync-local', 'sync-pending', 'sync-ok');
+    if (!hasRemote) {
+      elements.syncStatus.classList.add('sync-local');
+      elements.syncStatus.textContent = t(state, 'syncLocalOnly');
+      elements.syncStatus.title = t(state, 'syncLocalOnlyHint');
+      return;
+    }
+    if (pendingCount > 0) {
+      elements.syncStatus.classList.add('sync-pending');
+      elements.syncStatus.textContent = `${t(state, 'syncPending')} (${pendingCount})`;
+      elements.syncStatus.title = t(state, 'syncPendingHint');
+      return;
+    }
+    elements.syncStatus.classList.add('sync-ok');
+    elements.syncStatus.textContent = t(state, 'syncUpToDate');
+    elements.syncStatus.title = t(state, 'syncUpToDateHint');
+  };
+
+  elements.syncStatus.addEventListener('click', async () => {
+    await retryPendingSync();
+  });
+  elements.syncStatus.addEventListener('sync-refresh', () => updateSyncStatus());
+  subscribeSyncState(updateSyncStatus);
+  window.addEventListener('online', () => retryPendingSync());
 }
 
 function setupMapFilters(finderController) {
@@ -504,45 +541,21 @@ function setupAutoSync() {
     // Only auto-sync if we are NOT in the middle of editing something
     if (document.body.classList.contains('editing-mode')) return;
 
-    // 1. Sync Churches
     const remoteChurches = await loadChurches();
+
+    // Check if anything actually changed
     if (JSON.stringify(remoteChurches) !== JSON.stringify(state.churches)) {
       state.churches = remoteChurches;
       rerenderMarkers();
       updateCalendarList();
       renderChurchManager();
-      renderEventManager();
-
-      // Refresh details if open
-      if (state.selectedChurchId) {
-        const church = state.churches.find(c => c.id === state.selectedChurchId);
-        if (church) renderDetails(church, startEditChurch);
-      }
-      console.log('Live sync: Churches updated.');
+      console.log('Live sync: Data updated from remote.');
     }
-
-    // 2. Sync Moderation (if admin/host)
-    if (state.isAdminMode || state.isHostMode) {
-      const remoteSuggestions = await loadSuggestions();
-      if (JSON.stringify(remoteSuggestions) !== JSON.stringify(state.suggestions)) {
-        state.suggestions = remoteSuggestions;
-        renderModeration();
-        console.log('Live sync: Suggestions updated.');
-      }
-
-      if (state.isAdminMode) {
-        const remoteHostRequests = await loadHostRequests();
-        if (JSON.stringify(remoteHostRequests) !== JSON.stringify(state.hostRequests)) {
-          state.hostRequests = remoteHostRequests;
-          renderModeration();
-          console.log('Live sync: Host requests updated.');
-        }
-      }
-    }
-  }, 15000); // Check every 15 seconds for snappier refresh
+  }, 60000); // Check every 60 seconds
 }
 
 async function init() {
+  await retryPendingSync();
   state.churches = await loadChurches();
   state.suggestions = await loadSuggestions();
   state.hostRequests = await loadHostRequests();
@@ -558,7 +571,6 @@ async function init() {
   startEditChurch = adminController.startEditChurch;
   renderModeration = adminController.renderModeration;
   renderChurchManager = adminController.renderChurchManager;
-  renderEventManager = adminController.renderEventManager;
 
   const finderController = attachFinderController({
     state,
@@ -576,14 +588,15 @@ async function init() {
       if (church) renderDetails(church, startEditChurch);
       renderModeration();
       renderChurchManager();
-      renderEventManager();
       renderAuditLog();
     });
+    elements.syncStatus?.dispatchEvent(new Event('sync-refresh'));
   });
 
   setupNavigation();
   setupMapResizeSupport();
   setupCalendar();
+  setupSyncStatus();
   setupMapFilters(finderController);
   setupPublicForms();
   setupHardeningTools();
@@ -599,7 +612,6 @@ async function init() {
     if (church) renderDetails(church, startEditChurch);
     renderModeration();
     renderChurchManager();
-    renderEventManager();
     renderAuditLog();
   });
   resetMapView(map);

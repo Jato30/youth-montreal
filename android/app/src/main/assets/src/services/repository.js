@@ -4,18 +4,66 @@ import { loadChurches as loadLocalChurches, saveChurches as saveLocalChurches } 
 const SUGGESTIONS_KEY = 'youth-montreal-suggestions';
 const HOST_REQUESTS_KEY = 'youth-montreal-host-requests';
 const AUDIT_LOG_KEY = 'youth-montreal-audit-log';
+const PENDING_SYNC_KEY = 'youth-montreal-pending-sync';
+const syncListeners = new Set();
 
-const hasRemote = () => Boolean(SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim());
+function getRemoteUrl() {
+  if (SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim()) return SHEETS_WEB_APP_URL.trim();
+  if (typeof window !== 'undefined') {
+    const runtimeUrl = window.__SHEETS_WEB_APP_URL__ || localStorage.getItem('youth-montreal-sheets-url');
+    if (runtimeUrl && runtimeUrl.trim()) return runtimeUrl.trim();
+  }
+  return '';
+}
+
+const hasRemote = () => Boolean(getRemoteUrl());
+
+function readPendingSync() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '{}');
+    return typeof parsed === 'object' && parsed ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePendingSync(data) {
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(data));
+}
+
+function emitSyncState() {
+  const state = getSyncState();
+  syncListeners.forEach((listener) => listener(state));
+}
+
+function markPending(resource, payload, errorMessage = '') {
+  const pending = readPendingSync();
+  pending[resource] = {
+    payload,
+    failedAt: new Date().toISOString(),
+    errorMessage
+  };
+  writePendingSync(pending);
+  emitSyncState();
+}
+
+function clearPending(resource) {
+  const pending = readPendingSync();
+  if (!pending[resource]) return;
+  delete pending[resource];
+  writePendingSync(pending);
+  emitSyncState();
+}
 
 async function remoteGet(resource) {
-  const url = `${SHEETS_WEB_APP_URL}?resource=${encodeURIComponent(resource)}`;
+  const url = `${getRemoteUrl()}?resource=${encodeURIComponent(resource)}`;
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Remote GET failed: ${resource}`);
   return response.json();
 }
 
 async function remotePost(resource, payload) {
-  const response = await fetch(SHEETS_WEB_APP_URL, {
+  const response = await fetch(getRemoteUrl(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ resource, payload })
@@ -63,8 +111,9 @@ async function saveList(resource, localKey, list) {
   if (hasRemote()) {
     try {
       await remotePost(resource, list);
-    } catch {
-      // keep local even if remote fails
+      clearPending(resource);
+    } catch (error) {
+      markPending(resource, list, error instanceof Error ? error.message : String(error));
     }
   }
 }
@@ -72,10 +121,10 @@ async function saveList(resource, localKey, list) {
 export async function loadChurches() {
   if (hasRemote()) {
     try {
-      const data = await remoteGet('hosts');
-      if (Array.isArray(data?.hosts)) {
-        saveLocalChurches(data.hosts);
-        return data.hosts;
+      const data = await remoteGet('churches');
+      if (Array.isArray(data?.churches)) {
+        saveLocalChurches(data.churches);
+        return data.churches;
       }
     } catch {
       // fallback to local cache
@@ -84,15 +133,50 @@ export async function loadChurches() {
   return loadLocalChurches();
 }
 
-export async function saveChurches(hosts) {
-  saveLocalChurches(hosts);
+export async function saveChurches(churches) {
+  saveLocalChurches(churches);
   if (hasRemote()) {
     try {
-      await remotePost('hosts', hosts);
-    } catch {
-      // keep local even if remote fails
+      await remotePost('churches', churches);
+      clearPending('churches');
+    } catch (error) {
+      markPending('churches', churches, error instanceof Error ? error.message : String(error));
     }
   }
+}
+
+export async function retryPendingSync() {
+  if (!hasRemote()) return getSyncState();
+  const pending = readPendingSync();
+  const entries = Object.entries(pending);
+  for (const [resource, item] of entries) {
+    try {
+      await remotePost(resource, item?.payload ?? []);
+      clearPending(resource);
+    } catch {
+      // Keep pending for future retries
+    }
+  }
+  emitSyncState();
+  return getSyncState();
+}
+
+export function getSyncState() {
+  const pending = readPendingSync();
+  const pendingResources = Object.keys(pending);
+  return {
+    hasRemote: hasRemote(),
+    pendingResources,
+    pendingCount: pendingResources.length,
+    pending
+  };
+}
+
+export function subscribeSyncState(listener) {
+  if (typeof listener !== 'function') return () => {};
+  syncListeners.add(listener);
+  listener(getSyncState());
+  return () => syncListeners.delete(listener);
 }
 
 export async function loadSuggestions() {

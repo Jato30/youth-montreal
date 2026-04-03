@@ -74,9 +74,9 @@ function canManage(state, churchId) {
 function renderActionButtons(rowIndex, state, row) {
   return `
     <div class="finder-actions compact-actions">
-      <button type="button" class="secondary calendar-suggest-btn" data-row-index="${rowIndex}">${t(state, 'suggestEventUpdate')}</button>
-      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-edit-btn" data-row-index="${rowIndex}">${t(state, 'editPin')}</button>` : ''}
-      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-delete-btn" data-row-index="${rowIndex}">${t(state, 'delete')}</button>` : ''}
+      <button type="button" class="secondary calendar-suggest-btn icon-mobile-btn suggest-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'suggestEventUpdate')}"><span class="icon-label">${t(state, 'suggestEventUpdate')}</span></button>
+      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-edit-btn icon-mobile-btn edit-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>` : ''}
+      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-delete-btn icon-mobile-btn delete-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'delete')}"><span class="icon-label">${t(state, 'delete')}</span></button>` : ''}
     </div>
   `;
 }
@@ -158,12 +158,11 @@ function renderGrid(days, rows, state, compactMonth = false) {
                         <small>${row.type}</small>
                         <em>${row.churchName}</em>
                       </article>
-                      ${canManage(state, row.churchId) ? `
-                        <div class="calendar-inline-actions">
-                          <button type="button" class="secondary calendar-edit-btn" data-row-index="${index}">${t(state, 'editPin')}</button>
-                          <button type="button" class="secondary calendar-delete-btn" data-row-index="${index}">${t(state, 'delete')}</button>
-                        </div>
-                      ` : ''}
+                      <div class="calendar-inline-actions">
+                        <button type="button" class="secondary calendar-suggest-btn icon-mobile-btn suggest-icon-btn" data-row-index="${index}" aria-label="${t(state, 'suggestEventUpdate')}"><span class="icon-label">${t(state, 'suggestEventUpdate')}</span></button>
+                        ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-edit-btn icon-mobile-btn edit-icon-btn" data-row-index="${index}" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>` : ''}
+                        ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-delete-btn icon-mobile-btn delete-icon-btn" data-row-index="${index}" aria-label="${t(state, 'delete')}"><span class="icon-label">${t(state, 'delete')}</span></button>` : ''}
+                      </div>
                     `;
                   }).join('')
                 : `<p class="help-text">${t(state, 'noEventsForFilters')}</p>`}
@@ -184,8 +183,9 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
   const to = elements.calendarTo.value;
   const mode = elements.calendarMode?.value || 'daily';
 
-  // If daily mode and NO specific date filter is applied, we only show TODAY
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // If daily mode and NO specific date filter is applied, we use the current anchor day
+  const anchor = state.calendarAnchorDate instanceof Date ? state.calendarAnchorDate : new Date();
+  const todayStr = anchor.toISOString().slice(0, 10);
   let effectiveFrom = from || todayStr;
   let effectiveTo = to || effectiveFrom;
 

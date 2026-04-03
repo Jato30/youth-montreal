@@ -32,6 +32,7 @@
         </nav>
 
         <div class="header-controls">
+          <button id="sync-status" type="button" class="secondary sync-status" aria-live="polite" title="Sync status">Local only</button>
           <label class="language-picker">
             <span data-i18n="language">Language</span>
             <select id="language-select">
@@ -81,7 +82,7 @@
           <section class="workspace-column">
             <div id="workspace-places-view">
               <div class="view-section-toolbar">
-                <button id="add-church" type="button" class="secondary admin-only hidden" data-i18n="addChurch">Add church</button>
+                <button id="add-church" type="button" class="secondary admin-only hidden icon-mobile-btn add-icon-btn" aria-label="Add church" data-i18n="addChurch">Add church</button>
               </div>
               <label>
                 <span data-i18n="searchChurches">Search churches</span>
@@ -91,15 +92,8 @@
             </div>
 
             <div id="workspace-events-view" class="hidden">
-              <div class="view-section-toolbar">
-                <button id="workspace-add-event" type="button" class="secondary" data-i18n="addEvent">Add event</button>
-              </div>
               <div class="events-toolbar">
-                <div class="segmented-control">
-                  <button type="button" class="segment-btn active" data-workspace-event-mode="daily" data-i18n="dailyView">Daily</button>
-                  <button type="button" class="segment-btn" data-workspace-event-mode="weekly" data-i18n="weeklyView">Weekly</button>
-                  <button type="button" class="segment-btn" data-workspace-event-mode="monthly" data-i18n="monthlyView">Monthly</button>
-                </div>
+                <button id="workspace-add-event" type="button" class="secondary icon-mobile-btn add-icon-btn" aria-label="Add event" data-i18n="addEvent">Add event</button>
                 <div class="finder-actions compact-actions">
                   <button id="workspace-events-prev" type="button" class="secondary" data-i18n="previousPage">Previous</button>
                   <span id="workspace-events-page" class="help-text"></span>
@@ -160,7 +154,7 @@
                     <fieldset class="event-editor-block">
                       <legend data-i18n="gatherings">Gatherings</legend>
                       <div id="events-list"></div>
-                      <button id="add-event" type="button" data-i18n="addGathering">+ Add gathering</button>
+                      <button id="add-event" type="button" class="icon-mobile-btn add-icon-btn" aria-label="Add gathering" data-i18n="addGathering">+ Add gathering</button>
                     </fieldset>
                   </form>
                 </div>
@@ -170,15 +164,19 @@
                   <div id="editor-map-slot"></div>
                 </aside>
                 <div class="admin-actions editor-footer">
-                  <button id="delete-editing-item" type="button" class="secondary danger hidden" data-i18n="delete">Delete</button>
+                  <button id="delete-editing-item" type="button" class="secondary danger hidden icon-mobile-btn delete-icon-btn" aria-label="Delete" data-i18n="delete">Delete</button>
                   <button id="cancel-edit" type="button" class="secondary" data-i18n="cancelEdit">Cancel edit</button>
-                  <button id="save-edit" type="submit" form="church-form" data-i18n="saveChurch">Save church</button>
+                  <button id="save-edit" type="submit" form="church-form" class="icon-mobile-btn add-icon-btn" aria-label="Save church" data-i18n="saveChurch">Save church</button>
                 </div>
               </div>
             </section>
 
             <section id="workspace-moderation" class="admin-panel-card hidden">
               <h3 data-i18n="reviewSuggestionsTitle">Review suggestions</h3>
+              <div class="segmented-control workspace-tabs workspace-tabs-mobile admin-only hidden">
+                <button type="button" class="segment-btn active" data-moderation-view="suggestions" data-i18n="suggestionsTab">Suggestions</button>
+                <button type="button" class="segment-btn" data-moderation-view="hostRequests" data-i18n="hostRequestsTab">Host requests</button>
+              </div>
               <div id="suggestions-queue" class="stack-list"></div>
               <div id="host-queue" class="stack-list hidden"></div>
             </section>
@@ -419,8 +417,10 @@
       <div class="event-row">
         <div class="event-row-top">
           <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
-          <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
-          <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+          <div class="event-row-time-group">
+            <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
+            <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+          </div>
         </div>
         <div class="checkbox-select-list">
           <span class="field-label" data-i18n="eventType">Event type</span>
