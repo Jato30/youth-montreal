@@ -417,8 +417,10 @@
       <div class="event-row">
         <div class="event-row-top">
           <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
-          <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
-          <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+          <div class="event-row-time-group">
+            <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
+            <label><span data-i18n="atLabel">at</span><input type="time" name="time" required /></label>
+          </div>
         </div>
         <div class="checkbox-select-list">
           <span class="field-label" data-i18n="eventType">Event type</span>
