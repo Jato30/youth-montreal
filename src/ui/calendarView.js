@@ -74,9 +74,9 @@ function canManage(state, churchId) {
 function renderActionButtons(rowIndex, state, row) {
   return `
     <div class="finder-actions compact-actions">
-      <button type="button" class="secondary calendar-suggest-btn" data-row-index="${rowIndex}">${t(state, 'suggestEventUpdate')}</button>
-      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-edit-btn" data-row-index="${rowIndex}">${t(state, 'editPin')}</button>` : ''}
-      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-delete-btn" data-row-index="${rowIndex}">${t(state, 'delete')}</button>` : ''}
+      <button type="button" class="secondary calendar-suggest-btn icon-mobile-btn suggest-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'suggestEventUpdate')}"><span class="icon-label">${t(state, 'suggestEventUpdate')}</span></button>
+      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-edit-btn icon-mobile-btn edit-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'editPin')}"><span class="icon-label">${t(state, 'editPin')}</span></button>` : ''}
+      ${canManage(state, row.churchId) ? `<button type="button" class="secondary calendar-delete-btn icon-mobile-btn delete-icon-btn" data-row-index="${rowIndex}" aria-label="${t(state, 'delete')}"><span class="icon-label">${t(state, 'delete')}</span></button>` : ''}
     </div>
   `;
 }
@@ -142,7 +142,7 @@ function renderGrid(days, rows, state, compactMonth = false) {
         const dateKey = day.toISOString().slice(0, 10);
         const dayRows = rows.filter((row) => row.date === dateKey);
         return `
-          <section class="calendar-cell ${compactMonth && day.getMonth() !== days[10].getMonth() ? 'calendar-cell-muted' : ''}">
+          <section class="calendar-cell ${compactMonth && day.getMonth() !== days[10].getMonth() ? 'calendar-cell-muted' : ''}" data-day-key="${dateKey}">
             <header>
               <strong>${compactMonth ? day.getDate() : day.toLocaleDateString('en-CA', { weekday: 'short' })}</strong>
               <span>${compactMonth ? day.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : dateKey}</span>
@@ -152,18 +152,13 @@ function renderGrid(days, rows, state, compactMonth = false) {
                 ? dayRows.map((row) => {
                     const index = rows.indexOf(row);
                     return `
-                      <article class="calendar-badge" data-row-index="${index}">
+                      <article class="calendar-badge ${canManage(state, row.churchId) ? 'calendar-badge-manageable' : ''}" data-row-index="${index}" data-day-key="${dateKey}">
                         <strong>${row.time || '00:00'}</strong>
                         <span>${row.title || row.type}</span>
                         <small>${row.type}</small>
                         <em>${row.churchName}</em>
+                        ${canManage(state, row.churchId) ? '<span class="calendar-danger-icon" aria-hidden="true">⚠</span>' : ''}
                       </article>
-                      ${canManage(state, row.churchId) ? `
-                        <div class="calendar-inline-actions">
-                          <button type="button" class="secondary calendar-edit-btn" data-row-index="${index}">${t(state, 'editPin')}</button>
-                          <button type="button" class="secondary calendar-delete-btn" data-row-index="${index}">${t(state, 'delete')}</button>
-                        </div>
-                      ` : ''}
                     `;
                   }).join('')
                 : `<p class="help-text">${t(state, 'noEventsForFilters')}</p>`}
@@ -175,7 +170,7 @@ function renderGrid(days, rows, state, compactMonth = false) {
   `;
 }
 
-export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEditEvent, onDeleteEvent }) {
+export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEditEvent, onDeleteEvent, onOpenDay }) {
   const keyword = elements.calendarKeyword.value.trim().toLowerCase();
   const type = elements.calendarType.value.trim().toLowerCase();
   const language = elements.calendarLanguage.value.trim().toLowerCase();
@@ -184,8 +179,9 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
   const to = elements.calendarTo.value;
   const mode = elements.calendarMode?.value || 'daily';
 
-  // If daily mode and NO specific date filter is applied, we only show TODAY
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // If daily mode and NO specific date filter is applied, we use the current anchor day
+  const anchor = state.calendarAnchorDate instanceof Date ? state.calendarAnchorDate : new Date();
+  const todayStr = anchor.toISOString().slice(0, 10);
   let effectiveFrom = from || todayStr;
   let effectiveTo = to || effectiveFrom;
 
@@ -243,9 +239,25 @@ export function renderCalendarList({ state, elements, onSuggestEventUpdate, onEd
       if (!row) return;
       const church = state.churches.find((item) => item.id === row.churchId);
       if (!church) return;
+      if (mode !== 'daily') {
+        if (canManage(state, row.churchId)) onEditEvent?.(row);
+        else onOpenDay?.(row.date);
+        return;
+      }
       onSuggestEventUpdate?.(church, row);
     });
   });
+
+  if (mode === 'monthly') {
+    elements.calendarList.querySelectorAll('.calendar-cell').forEach((cell) => {
+      cell.addEventListener('click', (event) => {
+        if (event.target.closest('.calendar-badge')) return;
+        const dayKey = cell.dataset.dayKey;
+        if (!dayKey) return;
+        onOpenDay?.(dayKey);
+      });
+    });
+  }
 
   elements.calendarList.querySelectorAll('.calendar-edit-btn').forEach((button) => {
     button.addEventListener('click', () => {

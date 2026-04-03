@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="app-loading-overlay" class="app-loading-overlay hidden" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p data-i18n="loadingData">Loading data…</p>
+    </div>
     <header class="site-header">
       <a class="brand-block" href="#about-us" aria-label="Youth Montreal home">
         <div class="brand-logo">YOUTH<br />MTL</div>
@@ -81,9 +85,10 @@
           <section class="workspace-column">
             <div id="workspace-places-view">
               <div class="view-section-toolbar">
+                <button id="toggle-church-search" type="button" class="secondary icon-mobile-btn" aria-label="Search churches">🔎<span class="icon-label" data-i18n="searchChurches">Search churches</span></button>
                 <button id="add-church" type="button" class="secondary admin-only hidden" data-i18n="addChurch">Add church</button>
               </div>
-              <label>
+              <label id="church-search-wrap" class="collapsed-search hidden">
                 <span data-i18n="searchChurches">Search churches</span>
                 <input id="church-manager-search" placeholder="Name, address, language" />
               </label>
@@ -149,6 +154,8 @@
                         <legend data-i18n="languagesSpoken">Languages spoken</legend>
                         <label><input type="checkbox" name="languages" value="English" /> <span>English</span></label>
                         <label><input type="checkbox" name="languages" value="Français" /> <span>Français</span></label>
+                        <label><input type="checkbox" name="languages" value="Español" /> <span>Español</span></label>
+                        <label><input type="checkbox" name="languages" value="Other" /> <span data-i18n="otherLanguage">Others</span></label>
                       </fieldset>
 
                       <label class="field-web"><span data-i18n="website">Website</span><input type="url" name="website" /></label>
@@ -183,23 +190,23 @@
               <div id="host-queue" class="stack-list hidden"></div>
             </section>
 
-            <section id="hardening-panel" class="admin-panel-card hidden admin-only">
-              <h3 data-i18n="hardeningTitle">Hardening tools</h3>
-              <div class="finder-actions">
-                <button id="export-data" type="button" data-i18n="exportBackup">Export backup</button>
-                <label class="file-input-label secondary">
-                  <span data-i18n="importBackup">Import backup</span>
-                  <input id="import-data" type="file" accept="application/json" hidden />
-                </label>
-              </div>
-            </section>
           </section>
         </div>
       </section>
 
       <section id="audit-section" class="section-card hidden admin-only">
-        <details class="audit-accordion">
+        <details class="audit-accordion" open>
           <summary data-i18n="auditLogTitle">Audit log</summary>
+          <div id="hardening-panel" class="audit-hardening-toolbar">
+            <span class="help-text" data-i18n="hardeningTitle">Hardening tools</span>
+            <div class="finder-actions">
+              <button id="export-data" type="button" class="secondary icon-mobile-btn add-icon-btn" aria-label="Export backup" data-i18n="exportBackup">Export backup</button>
+              <label class="file-input-label secondary icon-mobile-btn add-icon-btn" aria-label="Import backup">
+                <span data-i18n="importBackup">Import backup</span>
+                <input id="import-data" type="file" accept="application/json" hidden />
+              </label>
+            </div>
+          </div>
           <ul id="audit-log-list" class="audit-log-list"></ul>
         </details>
       </section>
@@ -286,6 +293,7 @@
             <div class="calendar-toolbar">
               <div class="calendar-nav-controls hidden" id="calendar-day-nav">
                 <button type="button" id="cal-prev-day" class="secondary">&lt;</button>
+                <span id="cal-current-label" class="help-text"></span>
                 <button type="button" id="cal-today" class="secondary" data-i18n="today">Today</button>
                 <button type="button" id="cal-next-day" class="secondary">&gt;</button>
               </div>
@@ -417,10 +425,6 @@
 
     <template id="event-template">
       <div class="event-row">
-        <div class="event-row-header">
-          <span class="event-row-kicker" data-i18n="gatheringDetails">Gathering details</span>
-          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event">✕</button>
-        </div>
         <div class="event-row-top">
           <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
           <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
@@ -438,7 +442,7 @@
           </fieldset>
           <p class="checkbox-summary help-text"></p>
         </div>
-        <div class="editor-field-grid">
+        <div class="editor-field-grid event-row-meta-grid">
           <label>
             <span data-i18n="ageGroup">Age group</span>
             <select name="ageGroup">
@@ -456,6 +460,9 @@
               <option value="monthly">Monthly</option>
             </select>
           </label>
+        </div>
+        <div class="event-row-actions">
+          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event" data-i18n="delete">Delete</button>
         </div>
       </div>
     </template>

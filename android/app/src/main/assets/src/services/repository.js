@@ -4,24 +4,34 @@ import { loadChurches as loadLocalChurches, saveChurches as saveLocalChurches } 
 const SUGGESTIONS_KEY = 'youth-montreal-suggestions';
 const HOST_REQUESTS_KEY = 'youth-montreal-host-requests';
 const AUDIT_LOG_KEY = 'youth-montreal-audit-log';
+const REMOTE_TIMEOUT_MS = 8000;
 
 const hasRemote = () => Boolean(SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim());
 
 async function remoteGet(resource) {
   const url = `${SHEETS_WEB_APP_URL}?resource=${encodeURIComponent(resource)}`;
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REMOTE_TIMEOUT_MS);
+  const response = await fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
   if (!response.ok) throw new Error(`Remote GET failed: ${resource}`);
-  return response.json();
+  const data = await response.json();
+  if (data?.error) throw new Error(`Remote GET error: ${data.error}`);
+  return data;
 }
 
 async function remotePost(resource, payload) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REMOTE_TIMEOUT_MS);
   const response = await fetch(SHEETS_WEB_APP_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ resource, payload })
-  });
+    // Use a simple request body to avoid CORS preflight issues with Apps Script web apps.
+    body: JSON.stringify({ resource, payload }),
+    signal: controller.signal
+  }).finally(() => clearTimeout(timer));
   if (!response.ok) throw new Error(`Remote POST failed: ${resource}`);
-  return response.json();
+  const data = await response.json();
+  if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
+  return data;
 }
 
 function readLocalList(key) {

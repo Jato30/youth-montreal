@@ -1,5 +1,5 @@
 import { LANGUAGE_KEY, STORAGE_KEY } from './config.js';
-import { appendAuditLog, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, saveChurches, submitHostRequest, submitSuggestion } from './services/repository.js';
+import { appendAuditLog, getConfiguredSyncUrl, getSyncState, loadAuditLog, loadChurches, loadHostRequests, loadSuggestions, retryPendingSync, saveChurches, setConfiguredSyncUrl, subscribeSyncState, submitHostRequest, submitSuggestion } from './services/repository.js';
 import { createMap, renderMarkers, resetMapView } from './ui/mapView.js';
 import { renderChurchDetails } from './ui/detailsView.js';
 import { attachAdminController } from './controllers/adminController.js';
@@ -53,6 +53,8 @@ const elements = {
   hostRequestCancel: document.querySelector('#host-request-cancel'),
   toggleHostRequest: document.querySelector('#toggle-host-request'),
   churchManagerSearch: document.querySelector('#church-manager-search'),
+  churchSearchWrap: document.querySelector('#church-search-wrap'),
+  toggleChurchSearch: document.querySelector('#toggle-church-search'),
   churchManagerList: document.querySelector('#church-manager-list'),
   eventManagerSearch: document.querySelector('#event-manager-search'),
   eventManagerList: document.querySelector('#event-manager-list'),
@@ -89,7 +91,9 @@ const elements = {
   calendarDayNav: document.querySelector('#calendar-day-nav'),
   calPrevDay: document.querySelector('#cal-prev-day'),
   calToday: document.querySelector('#cal-today'),
-  calNextDay: document.querySelector('#cal-next-day')
+  calNextDay: document.querySelector('#cal-next-day'),
+  syncStatus: document.querySelector('#sync-status'),
+  loadingOverlay: document.querySelector('#app-loading-overlay')
 };
 
 const state = {
@@ -144,7 +148,13 @@ function updateCalendarList() {
     elements,
     onSuggestEventUpdate: openEventSuggestion,
     onEditEvent: editCalendarEvent,
-    onDeleteEvent: deleteCalendarEvent
+    onDeleteEvent: deleteCalendarEvent,
+    onOpenDay: (day) => {
+      state.calendarAnchorDate = new Date(day);
+      elements.calendarMode = { value: 'daily' };
+      elements.calendarModeButtons.forEach((item) => item.classList.toggle('active', item.dataset.calendarMode === 'daily'));
+      updateCalendarList();
+    }
   });
 }
 
@@ -207,12 +217,18 @@ let renderModeration = () => {};
 let renderChurchManager = () => {};
 
 async function deleteCalendarEvent(row) {
+  if (!confirm(t(state, 'deleteEventConfirm'))) return;
   const church = state.churches.find((item) => item.id === row.churchId);
   if (!church) return;
   const index = Number.isInteger(row.eventIndex) ? row.eventIndex : (church.events || []).findIndex((event) => event.date === row.date && event.time === row.time && event.type === row.type);
   if (index < 0) return;
   church.events.splice(index, 1);
-  await saveChurches(state.churches);
+  try {
+    await saveChurches(state.churches);
+  } catch {
+    elements.workspaceStatus.textContent = t(state, 'remoteSaveFailed');
+    return;
+  }
   state.auditLog = await appendAuditLog({ action: 'event_deleted', label: `${church.name}:${row.type}` });
   rerenderMarkers();
   renderAuditLog();
@@ -264,6 +280,7 @@ function setupCalendar() {
 
   elements.calendarApply.addEventListener('click', () => {
     state.calendarAnchorDate = elements.calendarFrom.value ? new Date(elements.calendarFrom.value) : new Date();
+    updateCalendarNavLabel();
     updateCalendarList();
   });
 
@@ -277,28 +294,87 @@ function setupCalendar() {
       elements.calendarMode = { value: button.dataset.calendarMode };
 
       const isDaily = button.dataset.calendarMode === 'daily';
-      elements.calendarDayNav.classList.toggle('hidden', !isDaily);
+      elements.calendarDayNav.classList.remove('hidden');
+      updateCalendarNavLabel();
 
       updateCalendarList();
     });
   });
 
-  // Daily Nav Logic
+  const getMode = () => elements.calendarMode?.value || 'daily';
+  const stepAnchor = (direction) => {
+    const mode = getMode();
+    if (mode === 'daily') state.calendarAnchorDate.setDate(state.calendarAnchorDate.getDate() + direction);
+    if (mode === 'weekly') state.calendarAnchorDate.setDate(state.calendarAnchorDate.getDate() + (7 * direction));
+    if (mode === 'monthly') state.calendarAnchorDate.setMonth(state.calendarAnchorDate.getMonth() + direction);
+    updateCalendarNavLabel();
+  };
+
+  function updateCalendarNavLabel() {
+    const labelNode = document.querySelector('#cal-current-label');
+    if (!labelNode) return;
+    const mode = getMode();
+    if (mode === 'daily') labelNode.textContent = state.calendarAnchorDate.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (mode === 'weekly') labelNode.textContent = state.calendarAnchorDate.toLocaleDateString('en-CA', { month: 'short', year: 'numeric' });
+    if (mode === 'monthly') labelNode.textContent = state.calendarAnchorDate.toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+  }
+
   elements.calPrevDay.addEventListener('click', () => {
-    state.calendarAnchorDate.setDate(state.calendarAnchorDate.getDate() - 1);
+    stepAnchor(-1);
     updateCalendarList();
   });
   elements.calNextDay.addEventListener('click', () => {
-    state.calendarAnchorDate.setDate(state.calendarAnchorDate.getDate() + 1);
+    stepAnchor(1);
     updateCalendarList();
   });
   elements.calToday.addEventListener('click', () => {
     state.calendarAnchorDate = new Date();
+    updateCalendarNavLabel();
     updateCalendarList();
   });
 
   elements.calendarMode = { value: 'daily' };
   elements.calendarDayNav.classList.remove('hidden');
+  updateCalendarNavLabel();
+}
+
+function setupSyncStatus() {
+  if (!elements.syncStatus) return;
+
+  const updateSyncStatus = (syncState = getSyncState()) => {
+    const { hasRemote, pendingCount } = syncState;
+    const activeUrl = getConfiguredSyncUrl();
+    elements.syncStatus.classList.remove('sync-local', 'sync-pending', 'sync-ok');
+    if (!hasRemote) {
+      elements.syncStatus.classList.add('sync-local');
+      elements.syncStatus.textContent = t(state, 'syncLocalOnly');
+      elements.syncStatus.title = t(state, 'syncLocalOnlyHint');
+      return;
+    }
+    if (pendingCount > 0) {
+      elements.syncStatus.classList.add('sync-pending');
+      elements.syncStatus.textContent = `${t(state, 'syncPending')} (${pendingCount})`;
+      elements.syncStatus.title = `${t(state, 'syncPendingHint')}${activeUrl ? `\n${t(state, 'syncEndpoint')}: ${activeUrl}` : ''}`;
+      return;
+    }
+    elements.syncStatus.classList.add('sync-ok');
+    elements.syncStatus.textContent = t(state, 'syncUpToDate');
+    elements.syncStatus.title = `${t(state, 'syncUpToDateHint')}${activeUrl ? `\n${t(state, 'syncEndpoint')}: ${activeUrl}` : ''}`;
+  };
+
+  elements.syncStatus.addEventListener('click', async () => {
+    const syncState = getSyncState();
+    if (!syncState.hasRemote) {
+      const url = prompt(t(state, 'enterSyncUrlPrompt'), getConfiguredSyncUrl() || '');
+      if (url === null) return;
+      setConfiguredSyncUrl(url);
+      if (!String(url || '').trim()) return;
+    }
+    await retryPendingSync();
+  });
+  elements.syncStatus.addEventListener('sync-refresh', () => updateSyncStatus());
+  subscribeSyncState(updateSyncStatus);
+  window.addEventListener('online', () => retryPendingSync());
 }
 
 function setupMapFilters(finderController) {
@@ -517,33 +593,68 @@ function setupAutoSync() {
 }
 
 async function init() {
-  state.churches = await loadChurches();
-  state.suggestions = await loadSuggestions();
-  state.hostRequests = await loadHostRequests();
-  state.auditLog = await loadAuditLog();
+  elements.loadingOverlay?.classList.remove('hidden');
+  try {
+    await Promise.race([
+      retryPendingSync(),
+      new Promise((resolve) => setTimeout(resolve, 9000))
+    ]);
+    state.churches = await loadChurches();
+    state.suggestions = await loadSuggestions();
+    state.hostRequests = await loadHostRequests();
+    state.auditLog = await loadAuditLog();
 
-  const adminController = attachAdminController({
-    state,
-    map,
-    elements,
-    renderMarkers: () => rerenderMarkers(),
-    renderChurchDetails: (church, onEdit) => renderDetails(church, onEdit)
-  });
-  startEditChurch = adminController.startEditChurch;
-  renderModeration = adminController.renderModeration;
-  renderChurchManager = adminController.renderChurchManager;
+    const adminController = attachAdminController({
+      state,
+      map,
+      elements,
+      renderMarkers: () => rerenderMarkers(),
+      renderChurchDetails: (church, onEdit) => renderDetails(church, onEdit)
+    });
+    startEditChurch = adminController.startEditChurch;
+    renderModeration = adminController.renderModeration;
+    renderChurchManager = adminController.renderChurchManager;
 
-  const finderController = attachFinderController({
-    state,
-    map,
-    elements,
-    renderMarkers: () => rerenderMarkers(),
-    renderChurchDetails: (church) => renderDetails(church, startEditChurch)
-  });
+    const finderController = attachFinderController({
+      state,
+      map,
+      elements,
+      renderMarkers: () => rerenderMarkers(),
+      renderChurchDetails: (church) => renderDetails(church, startEditChurch)
+    });
 
-  elements.languageSelect.value = TRANSLATIONS[state.language] ? state.language : 'en';
-  elements.languageSelect.addEventListener('change', () => {
-    state.language = elements.languageSelect.value;
+    elements.languageSelect.value = TRANSLATIONS[state.language] ? state.language : 'en';
+    elements.languageSelect.addEventListener('change', () => {
+      state.language = elements.languageSelect.value;
+      applyLanguage(state, elements, () => {
+        const church = state.churches.find((item) => item.id === state.selectedChurchId);
+        if (church) renderDetails(church, startEditChurch);
+        renderModeration();
+        renderChurchManager();
+        renderAuditLog();
+      });
+      elements.syncStatus?.dispatchEvent(new Event('sync-refresh'));
+    });
+
+    setupNavigation();
+    setupMapResizeSupport();
+    setupCalendar();
+    setupSyncStatus();
+    setupMapFilters(finderController);
+    setupPublicForms();
+    setupHardeningTools();
+    setupMobileMenu();
+    setupScrollHeader();
+    setupAutoSync(); // Start polling
+
+    elements.toggleChurchSearch?.addEventListener('click', () => {
+      elements.churchSearchWrap?.classList.toggle('hidden');
+      if (!elements.churchSearchWrap?.classList.contains('hidden')) elements.churchManagerSearch?.focus();
+    });
+    showFindView('map');
+    rerenderMarkers();
+    updateCalendarList();
+    renderAuditLog();
     applyLanguage(state, elements, () => {
       const church = state.churches.find((item) => item.id === state.selectedChurchId);
       if (church) renderDetails(church, startEditChurch);
@@ -551,29 +662,12 @@ async function init() {
       renderChurchManager();
       renderAuditLog();
     });
-  });
-
-  setupNavigation();
-  setupMapResizeSupport();
-  setupCalendar();
-  setupMapFilters(finderController);
-  setupPublicForms();
-  setupHardeningTools();
-  setupMobileMenu();
-  setupScrollHeader();
-  setupAutoSync(); // Start polling
-  showFindView('map');
-  rerenderMarkers();
-  updateCalendarList();
-  renderAuditLog();
-  applyLanguage(state, elements, () => {
-    const church = state.churches.find((item) => item.id === state.selectedChurchId);
-    if (church) renderDetails(church, startEditChurch);
-    renderModeration();
-    renderChurchManager();
-    renderAuditLog();
-  });
-  resetMapView(map);
+    resetMapView(map);
+  } catch (error) {
+    console.error('Initialization fallback triggered:', error);
+  } finally {
+    elements.loadingOverlay?.classList.add('hidden');
+  }
 }
 
 init();

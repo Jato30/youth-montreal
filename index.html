@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="app-loading-overlay" class="app-loading-overlay hidden" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p data-i18n="loadingData">Loading data…</p>
+    </div>
     <header class="site-header">
       <a class="brand-block" href="#about-us" aria-label="Youth Montreal home">
         <div class="brand-logo">YOUTH<br />MTL</div>
@@ -32,6 +36,7 @@
         </nav>
 
         <div class="header-controls">
+          <button id="sync-status" type="button" class="secondary sync-status" aria-live="polite" title="Sync status">Local only</button>
           <label class="language-picker">
             <span data-i18n="language">Language</span>
             <select id="language-select">
@@ -81,9 +86,10 @@
           <section class="workspace-column">
             <div id="workspace-places-view">
               <div class="view-section-toolbar">
-                <button id="add-church" type="button" class="secondary admin-only hidden" data-i18n="addChurch">Add church</button>
+                <button id="toggle-church-search" type="button" class="secondary icon-mobile-btn" aria-label="Search churches">🔎<span class="icon-label" data-i18n="searchChurches">Search churches</span></button>
+                <button id="add-church" type="button" class="secondary admin-only hidden icon-mobile-btn add-icon-btn" aria-label="Add church" data-i18n="addChurch">Add church</button>
               </div>
-              <label>
+              <label id="church-search-wrap" class="collapsed-search hidden">
                 <span data-i18n="searchChurches">Search churches</span>
                 <input id="church-manager-search" placeholder="Name, address, language" />
               </label>
@@ -91,15 +97,8 @@
             </div>
 
             <div id="workspace-events-view" class="hidden">
-              <div class="view-section-toolbar">
-                <button id="workspace-add-event" type="button" class="secondary" data-i18n="addEvent">Add event</button>
-              </div>
               <div class="events-toolbar">
-                <div class="segmented-control">
-                  <button type="button" class="segment-btn active" data-workspace-event-mode="daily" data-i18n="dailyView">Daily</button>
-                  <button type="button" class="segment-btn" data-workspace-event-mode="weekly" data-i18n="weeklyView">Weekly</button>
-                  <button type="button" class="segment-btn" data-workspace-event-mode="monthly" data-i18n="monthlyView">Monthly</button>
-                </div>
+                <button id="workspace-add-event" type="button" class="secondary icon-mobile-btn add-icon-btn" aria-label="Add event" data-i18n="addEvent">Add event</button>
                 <div class="finder-actions compact-actions">
                   <button id="workspace-events-prev" type="button" class="secondary" data-i18n="previousPage">Previous</button>
                   <span id="workspace-events-page" class="help-text"></span>
@@ -149,6 +148,8 @@
                         <legend data-i18n="languagesSpoken">Languages spoken</legend>
                         <label><input type="checkbox" name="languages" value="English" /> <span>English</span></label>
                         <label><input type="checkbox" name="languages" value="Français" /> <span>Français</span></label>
+                        <label><input type="checkbox" name="languages" value="Español" /> <span>Español</span></label>
+                        <label><input type="checkbox" name="languages" value="Other" /> <span data-i18n="otherLanguage">Others</span></label>
                       </fieldset>
 
                       <label class="field-web"><span data-i18n="website">Website</span><input type="url" name="website" /></label>
@@ -160,7 +161,7 @@
                     <fieldset class="event-editor-block">
                       <legend data-i18n="gatherings">Gatherings</legend>
                       <div id="events-list"></div>
-                      <button id="add-event" type="button" data-i18n="addGathering">+ Add gathering</button>
+                      <button id="add-event" type="button" class="icon-mobile-btn add-icon-btn" aria-label="Add gathering" data-i18n="addGathering">+ Add gathering</button>
                     </fieldset>
                   </form>
                 </div>
@@ -170,36 +171,40 @@
                   <div id="editor-map-slot"></div>
                 </aside>
                 <div class="admin-actions editor-footer">
-                  <button id="delete-editing-item" type="button" class="secondary danger hidden" data-i18n="delete">Delete</button>
+                  <button id="delete-editing-item" type="button" class="secondary danger hidden icon-mobile-btn delete-icon-btn" aria-label="Delete" data-i18n="delete">Delete</button>
                   <button id="cancel-edit" type="button" class="secondary" data-i18n="cancelEdit">Cancel edit</button>
-                  <button id="save-edit" type="submit" form="church-form" data-i18n="saveChurch">Save church</button>
+                  <button id="save-edit" type="submit" form="church-form" class="icon-mobile-btn add-icon-btn" aria-label="Save church" data-i18n="saveChurch">Save church</button>
                 </div>
               </div>
             </section>
 
             <section id="workspace-moderation" class="admin-panel-card hidden">
               <h3 data-i18n="reviewSuggestionsTitle">Review suggestions</h3>
+              <div class="segmented-control workspace-tabs workspace-tabs-mobile admin-only hidden">
+                <button type="button" class="segment-btn active" data-moderation-view="suggestions" data-i18n="suggestionsTab">Suggestions</button>
+                <button type="button" class="segment-btn" data-moderation-view="hostRequests" data-i18n="hostRequestsTab">Host requests</button>
+              </div>
               <div id="suggestions-queue" class="stack-list"></div>
               <div id="host-queue" class="stack-list hidden"></div>
             </section>
 
-            <section id="hardening-panel" class="admin-panel-card hidden admin-only">
-              <h3 data-i18n="hardeningTitle">Hardening tools</h3>
-              <div class="finder-actions">
-                <button id="export-data" type="button" data-i18n="exportBackup">Export backup</button>
-                <label class="file-input-label secondary">
-                  <span data-i18n="importBackup">Import backup</span>
-                  <input id="import-data" type="file" accept="application/json" hidden />
-                </label>
-              </div>
-            </section>
           </section>
         </div>
       </section>
 
       <section id="audit-section" class="section-card hidden admin-only">
-        <details class="audit-accordion">
+        <details class="audit-accordion" open>
           <summary data-i18n="auditLogTitle">Audit log</summary>
+          <div id="hardening-panel" class="audit-hardening-toolbar">
+            <span class="help-text" data-i18n="hardeningTitle">Hardening tools</span>
+            <div class="finder-actions">
+              <button id="export-data" type="button" class="secondary icon-mobile-btn add-icon-btn" aria-label="Export backup" data-i18n="exportBackup">Export backup</button>
+              <label class="file-input-label secondary icon-mobile-btn add-icon-btn" aria-label="Import backup">
+                <span data-i18n="importBackup">Import backup</span>
+                <input id="import-data" type="file" accept="application/json" hidden />
+              </label>
+            </div>
+          </div>
           <ul id="audit-log-list" class="audit-log-list"></ul>
         </details>
       </section>
@@ -286,6 +291,7 @@
             <div class="calendar-toolbar">
               <div class="calendar-nav-controls hidden" id="calendar-day-nav">
                 <button type="button" id="cal-prev-day" class="secondary">&lt;</button>
+                <span id="cal-current-label" class="help-text"></span>
                 <button type="button" id="cal-today" class="secondary" data-i18n="today">Today</button>
                 <button type="button" id="cal-next-day" class="secondary">&gt;</button>
               </div>
@@ -417,10 +423,6 @@
 
     <template id="event-template">
       <div class="event-row">
-        <div class="event-row-header">
-          <span class="event-row-kicker" data-i18n="gatheringDetails">Gathering details</span>
-          <button type="button" class="remove-event" aria-label="Remove event" title="Remove event">✕</button>
-        </div>
         <div class="event-row-top">
           <label><span data-i18n="eventTitle">Event title</span><input name="title" required /></label>
           <label><span data-i18n="from">From</span><input type="date" name="date" required /></label>
@@ -438,7 +440,7 @@
           </fieldset>
           <p class="checkbox-summary help-text"></p>
         </div>
-        <div class="editor-field-grid">
+        <div class="editor-field-grid event-row-meta-grid">
           <label>
             <span data-i18n="ageGroup">Age group</span>
             <select name="ageGroup">
@@ -456,6 +458,9 @@
               <option value="monthly">Monthly</option>
             </select>
           </label>
+        </div>
+        <div class="event-row-actions">
+          <button type="button" class="remove-event icon-mobile-btn delete-icon-btn" aria-label="Remove event" title="Remove event"><span class="icon-label" data-i18n="delete">Delete</span></button>
         </div>
       </div>
     </template>
