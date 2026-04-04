@@ -9,7 +9,7 @@ const SYNC_URL_KEY = 'youth-montreal-sheets-url';
 const syncListeners = new Set();
 const REMOTE_TIMEOUT_MS = 8000;
 const REMOTE_COOLDOWN_MS = 30000;
-let remoteBlockedUntil = 0;
+const remoteBlockedUntilByResource = new Map();
 
 function getRemoteUrl() {
   if (SHEETS_WEB_APP_URL && SHEETS_WEB_APP_URL.trim()) return SHEETS_WEB_APP_URL.trim();
@@ -21,7 +21,20 @@ function getRemoteUrl() {
 }
 
 const hasRemote = () => Boolean(getRemoteUrl());
-const canAttemptRemote = () => hasRemote() && Date.now() >= remoteBlockedUntil;
+
+function canAttemptRemote(resource) {
+  if (!hasRemote()) return false;
+  const blockedUntil = remoteBlockedUntilByResource.get(resource) || 0;
+  return Date.now() >= blockedUntil;
+}
+
+function clearRemoteCooldown(resource) {
+  remoteBlockedUntilByResource.delete(resource);
+}
+
+function markRemoteCooldown(resource) {
+  remoteBlockedUntilByResource.set(resource, Date.now() + REMOTE_COOLDOWN_MS);
+}
 
 export function getConfiguredSyncUrl() {
   return getRemoteUrl();
@@ -85,10 +98,10 @@ async function remoteGet(resource) {
     if (!response.ok) throw new Error(`Remote GET failed: ${resource}`);
     const data = await response.json();
     if (data?.error) throw new Error(`Remote GET error: ${data.error}`);
-    remoteBlockedUntil = 0;
+    clearRemoteCooldown(resource);
     return data;
   } catch (error) {
-    remoteBlockedUntil = Date.now() + REMOTE_COOLDOWN_MS;
+    markRemoteCooldown(resource);
     throw error;
   }
 }
@@ -105,10 +118,10 @@ async function remotePost(resource, payload) {
     if (!response.ok) throw new Error(`Remote POST failed: ${resource}`);
     const data = await response.json();
     if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
-    remoteBlockedUntil = 0;
+    clearRemoteCooldown(resource);
     return data;
   } catch (error) {
-    remoteBlockedUntil = Date.now() + REMOTE_COOLDOWN_MS;
+    markRemoteCooldown(resource);
     throw error;
   }
 }
@@ -134,7 +147,7 @@ function normalizeEntry(entry) {
 }
 
 async function loadList(resource, localKey) {
-  if (canAttemptRemote()) {
+  if (canAttemptRemote(resource)) {
     try {
       const data = await remoteGet(resource);
       const list = Array.isArray(data?.[resource]) ? data[resource].map(normalizeEntry) : [];
@@ -149,7 +162,7 @@ async function loadList(resource, localKey) {
 
 async function saveList(resource, localKey, list) {
   writeLocalList(localKey, list);
-  if (canAttemptRemote()) {
+  if (canAttemptRemote(resource)) {
     try {
       await remotePost(resource, list);
       clearPending(resource);
@@ -160,7 +173,7 @@ async function saveList(resource, localKey, list) {
 }
 
 export async function loadHosts() {
-  if (canAttemptRemote()) {
+  if (canAttemptRemote('hosts')) {
     try {
       const data = await remoteGet('hosts');
       if (Array.isArray(data?.hosts)) {
@@ -176,7 +189,7 @@ export async function loadHosts() {
 
 export async function saveHosts(hosts) {
   saveLocalHosts(hosts);
-  if (canAttemptRemote()) {
+  if (canAttemptRemote('hosts')) {
     try {
       await remotePost('hosts', hosts);
       clearPending('hosts');
@@ -187,7 +200,7 @@ export async function saveHosts(hosts) {
 }
 
 export async function retryPendingSync() {
-  remoteBlockedUntil = 0;
+  remoteBlockedUntilByResource.clear();
   if (!hasRemote()) return getSyncState();
   const pending = readPendingSync();
   const entries = Object.entries(pending);

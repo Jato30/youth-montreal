@@ -59,7 +59,7 @@ If a broken URL or unavailable Apps Script endpoint is configured, startup can f
 Mitigations now in place:
 
 - Cloud reads are requested in parallel during startup (instead of sequentially), so fallback to local cache is much faster when remote is down.
-- After a remote timeout/error, sync attempts enter a short cooldown window before retrying, preventing repeated timeout loops.
+- After a remote timeout/error, only that failing resource enters a short cooldown window before retrying (resource-scoped cooldown), preventing repeated timeout loops without blocking other resources like hosts.
 - Manual retry still works from the sync chip and clears the cooldown immediately.
 
 ### Terminology migration compatibility (merge-readiness)
