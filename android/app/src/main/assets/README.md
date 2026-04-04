@@ -73,6 +73,7 @@ Internal code now standardizes on:
 - `host` (instead of church/place/organizer internals)
 - `event`
 - `report`
+- Host form field names are canonicalized to `hostId` and `hostName` in both web and Android asset templates/controllers.
 
 For merge safety while all modules are being aligned, repository and app state keep backward-compatible aliases so older modules still run during transition. User-facing labels remain context-specific aliases from i18n.
 

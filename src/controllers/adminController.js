@@ -49,18 +49,18 @@ function canEditHost(state, hostId) {
 
 function getRelevantSuggestions(state) {
   if (state.isAdminMode) return state.suggestions;
-  if (state.isHostMode) return state.suggestions.filter((item) => item.churchId === state.hostChurchId || !item.churchId);
+  if (state.isHostMode) return state.suggestions.filter((item) => item.hostId === state.hostHostId || !item.hostId);
   return [];
 }
 
 export function attachAdminController({ state, map, elements, renderMarkers, renderHostDetails }) {
   let draftMarker = null;
-  const churchOptions = document.querySelector('#saved-churches');
+  const hostOptions = document.querySelector('#saved-hosts');
   const hostSummary = document.querySelector('#event-host-summary');
 
-  const updateChurchOptions = () => {
-    if (!churchOptions) return;
-    churchOptions.innerHTML = state.hosts
+  const updateHostOptions = () => {
+    if (!hostOptions) return;
+    hostOptions.innerHTML = state.hosts
       .filter((host) => host.hostPasscode || state.isAdminMode)
       .map((host) => `<option value="${host.name}"></option>`)
       .join('');
@@ -89,7 +89,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     if (!host) return;
     elements.hostForm.elements.hostId.value = host.id;
     state.selectedHostId = host.id;
-    elements.hostForm.elements.hostHostName.value = host.name;
+    elements.hostForm.elements.hostName.value = host.name;
     hostSummary.textContent = shortenAddress(host.address) || t(state, 'hostSelected');
     elements.editorContext.textContent = `${host.name} — ${shortenAddress(host.address)}`;
     elements.editorContext.classList.remove('hidden');
@@ -98,7 +98,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
 
   const clearHostSelection = () => {
     elements.hostForm.elements.hostId.value = '';
-    elements.hostForm.elements.hostHostName.value = '';
+    elements.hostForm.elements.hostName.value = '';
     hostSummary.textContent = t(state, 'selectHostPrompt');
     elements.editorContext.textContent = '';
     elements.editorContext.classList.add('hidden');
@@ -193,7 +193,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   };
 
   const renderHostManager = () => {
-    updateChurchOptions();
+    updateHostOptions();
     const query = elements.hostManagerSearch?.value.trim().toLowerCase() || '';
     const visibleHosts = state.isHostMode ? state.hosts.filter((host) => host.id === state.hostHostId) : state.hosts;
     const rows = visibleHosts.filter((host) => `${host.name} ${host.address || ''}`.toLowerCase().includes(query));
@@ -483,35 +483,35 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   elements.hostForm.elements.address.addEventListener('input', async (event) => populateAddressSuggestions(event.target.value));
   elements.hostForm.elements.address.addEventListener('change', autofillHostAddress);
   elements.hostForm.elements.address.addEventListener('blur', autofillHostAddress);
-  elements.hostForm.elements.hostChurchName?.addEventListener('input', () => {
-    const match = state.churches.find((church) => church.name.toLowerCase() === elements.hostForm.elements.hostChurchName.value.trim().toLowerCase());
-    if (match) selectHostChurch(match);
+  elements.hostForm.elements.hostName?.addEventListener('input', () => {
+    const match = state.hosts.find((host) => host.name.toLowerCase() === elements.hostForm.elements.hostName.value.trim().toLowerCase());
+    if (match) selectHostHost(match);
   });
-  elements.hostForm.elements.hostChurchName?.addEventListener('change', () => {
-    const match = state.churches.find((church) => church.name.toLowerCase() === elements.hostForm.elements.hostChurchName.value.trim().toLowerCase());
-    if (match) selectHostChurch(match);
+  elements.hostForm.elements.hostName?.addEventListener('change', () => {
+    const match = state.hosts.find((host) => host.name.toLowerCase() === elements.hostForm.elements.hostName.value.trim().toLowerCase());
+    if (match) selectHostHost(match);
   });
 
   elements.hostManagerList.addEventListener('click', async (event) => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
-    const churchId = button.closest('.queue-actions')?.dataset.id;
-    if (!churchId) return;
+    const hostId = button.closest('.queue-actions')?.dataset.id;
+    if (!hostId) return;
 
     if (button.dataset.action === 'edit') {
-      startEditHost(churchId);
+      startEditHost(hostId);
       return;
     }
 
     if (button.dataset.action === 'delete' && state.isAdminMode) {
-      if (!confirm(`${t(state, 'deleteChurchConfirm')} ${churchId}?`)) return;
-      state.churches = state.churches.filter((item) => item.id !== churchId);
+      if (!confirm(`${t(state, 'deleteHostConfirm')} ${hostId}?`)) return;
+      state.hosts = state.hosts.filter((item) => item.id !== hostId);
       if (!await saveHostsWithFeedback()) return;
-      state.auditLog = await appendAuditLog({ action: 'church_deleted', label: churchId });
+      state.auditLog = await appendAuditLog({ action: 'host_deleted', label: hostId });
       renderMarkers();
       renderHostManager();
       renderEventManager();
-      elements.adminStatus.textContent = t(state, 'churchDeleted');
+      elements.adminStatus.textContent = t(state, 'hostDeleted');
     }
   });
 
@@ -519,24 +519,24 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     const button = event.target.closest('button[data-action]');
     if (!button) return;
     const wrapper = button.closest('.queue-actions');
-    const churchId = wrapper?.dataset.id;
+    const hostId = wrapper?.dataset.id;
     const eventIndex = Number(wrapper?.dataset.eventIndex);
-    const church = state.churches.find((item) => item.id === churchId);
-    if (!church) return;
+    const host = state.hosts.find((item) => item.id === hostId);
+    if (!host) return;
 
     if (button.dataset.action === 'edit-event') {
-      startEditHost(churchId, { eventIndex });
+      startEditHost(hostId, { eventIndex });
       return;
     }
 
     if (button.dataset.action === 'delete-event') {
       if (!confirm(t(state, 'deleteEventConfirm'))) return;
-      church.events.splice(eventIndex, 1);
+      host.events.splice(eventIndex, 1);
       if (!await saveHostsWithFeedback()) return;
-      state.auditLog = await appendAuditLog({ action: 'event_deleted', label: church.name });
+      state.auditLog = await appendAuditLog({ action: 'event_deleted', label: host.name });
       renderEventManager();
       renderMarkers();
-      if (state.selectedHostId === churchId) renderHostDetails(church, startEditHost);
+      if (state.selectedHostId === hostId) renderHostDetails(host, startEditHost);
       elements.workspaceStatus.textContent = t(state, 'eventDeleted');
     }
   });
@@ -560,7 +560,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       let generatedHostCode = '';
       if (status === 'approved') {
         generatedHostCode = hostCode();
-        state.churches.push({
+        state.hosts.push({
           id: crypto.randomUUID(),
           hostPasscode: generatedHostCode,
           name: state.hostRequests.find((item) => item.id === id)?.churchName || t(state, 'newHostChurchName'),
@@ -593,45 +593,45 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
 
   elements.addEventButton.addEventListener('click', () => addEventRow(elements.eventsList, elements.eventTemplate, state));
   elements.workspaceAddEventButton.addEventListener('click', () => {
-    const preferredChurchId = state.hostChurchId || state.selectedHostId || null;
-    startEditHost(preferredChurchId, { mode: 'new-event' });
+    const preferredHostId = state.hostHostId || state.selectedHostId || null;
+    startEditHost(preferredHostId, { mode: 'new-event' });
   });
   elements.cancelEditButton.addEventListener('click', resetForm);
 
   elements.deleteEditingItemButton.addEventListener('click', async () => {
-    const churchId = elements.hostForm.elements.hostId.value;
-    const church = state.churches.find((item) => item.id === churchId);
-    if (!church) return;
+    const hostId = elements.hostForm.elements.hostId.value;
+    const host = state.hosts.find((item) => item.id === hostId);
+    if (!host) return;
 
     if (state.editorMode === 'event') {
       const eventIndex = Number(elements.hostForm.elements.eventIndex.value);
-      if (Number.isInteger(eventIndex) && eventIndex >= 0 && eventIndex < church.events.length) {
+      if (Number.isInteger(eventIndex) && eventIndex >= 0 && eventIndex < host.events.length) {
         if (!confirm(t(state, 'deleteEventConfirm'))) return;
-        church.events.splice(eventIndex, 1);
+        host.events.splice(eventIndex, 1);
         if (!await saveHostsWithFeedback()) return;
-        state.auditLog = await appendAuditLog({ action: 'event_deleted', label: church.name });
+        state.auditLog = await appendAuditLog({ action: 'event_deleted', label: host.name });
         renderEventManager();
         renderMarkers();
-        renderHostDetails(church, startEditHost);
+        renderHostDetails(host, startEditHost);
         elements.workspaceStatus.textContent = t(state, 'eventDeleted');
         resetForm();
       }
       return;
     }
 
-    if (!confirm(`${t(state, 'deleteChurchConfirm')} ${church.name}?`)) return;
-    state.churches = state.churches.filter((item) => item.id !== churchId);
+    if (!confirm(`${t(state, 'deleteHostConfirm')} ${host.name}?`)) return;
+    state.hosts = state.hosts.filter((item) => item.id !== hostId);
     if (!await saveHostsWithFeedback()) return;
-    state.auditLog = await appendAuditLog({ action: 'church_deleted', label: church.name });
+    state.auditLog = await appendAuditLog({ action: 'host_deleted', label: host.name });
     renderMarkers();
     renderHostManager();
     renderEventManager();
-    elements.workspaceStatus.textContent = t(state, 'churchDeleted');
+    elements.workspaceStatus.textContent = t(state, 'hostDeleted');
     resetForm();
   });
 
   map.on('click', async (event) => {
-    if (elements.adminPanel.classList.contains('hidden') || state.editorMode !== 'church') return;
+    if (elements.adminPanel.classList.contains('hidden') || state.editorMode !== 'host') return;
     elements.hostForm.elements.lat.value = event.latlng.lat.toFixed(6);
     elements.hostForm.elements.lng.value = event.latlng.lng.toFixed(6);
     updateDraftMarker(event.latlng.lat, event.latlng.lng);
@@ -648,34 +648,34 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   elements.hostForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(elements.hostForm);
-    const existing = state.churches.find((item) => item.id === formData.get('hostId'));
+    const existing = state.hosts.find((item) => item.id === formData.get('hostId'));
     const eventRows = readEventRows();
 
     if (state.editorMode === 'new-event') {
-      const churchId = formData.get('hostId');
-      const church = state.churches.find((item) => item.id === churchId);
+      const hostId = formData.get('hostId');
+      const host = state.hosts.find((item) => item.id === hostId);
       const nextEvent = eventRows[0];
-      if (!church || !nextEvent) {
+      if (!host || !nextEvent) {
         elements.adminStatus.textContent = t(state, 'selectChurchPrompt');
         return;
       }
-      church.events.push(nextEvent);
+      host.events.push(nextEvent);
       if (!await saveHostsWithFeedback()) return;
-      state.auditLog = await appendAuditLog({ action: 'event_created', label: `${church.name}:${nextEvent.title}` });
+      state.auditLog = await appendAuditLog({ action: 'event_created', label: `${host.name}:${nextEvent.title}` });
       renderMarkers();
       renderHostManager();
       renderEventManager();
-      renderHostDetails(church, startEditHost);
+      renderHostDetails(host, startEditHost);
       elements.workspaceStatus.textContent = t(state, 'eventSaved');
       resetForm();
       return;
     }
 
-    const churchId = formData.get('hostId') || crypto.randomUUID();
-    if (state.isHostMode && churchId !== state.hostChurchId && formData.get('hostId')) return;
+    const hostId = formData.get('hostId') || crypto.randomUUID();
+    if (state.isHostMode && hostId !== state.hostHostId && formData.get('hostId')) return;
     const existingEvents = existing?.events || [];
-    const church = {
-      id: churchId,
+    const host = {
+      id: hostId,
       hostPasscode: existing?.hostPasscode || hostCode(),
       name: state.editorMode === 'event' ? existing?.name || '' : formData.get('name').trim(),
       address: state.editorMode === 'event' ? existing?.address || '' : normalizeAddress(formData.get('address').trim()),
@@ -695,34 +695,34 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       const eventIndex = Number(formData.get('eventIndex'));
       const nextEvent = eventRows[0];
       if (!nextEvent) return;
-      if (Number.isInteger(eventIndex) && eventIndex >= 0 && eventIndex < church.events.length) church.events[eventIndex] = nextEvent;
-      else church.events.push(nextEvent);
-      const churchIndex = state.churches.findIndex((item) => item.id === church.id);
-      if (churchIndex >= 0) state.churches[churchIndex] = church;
+      if (Number.isInteger(eventIndex) && eventIndex >= 0 && eventIndex < host.events.length) host.events[eventIndex] = nextEvent;
+      else host.events.push(nextEvent);
+      const hostIndex = state.hosts.findIndex((item) => item.id === host.id);
+      if (hostIndex >= 0) state.hosts[hostIndex] = host;
       if (!await saveHostsWithFeedback()) return;
-      state.auditLog = await appendAuditLog({ action: churchIndex >= 0 && eventIndex < existingEvents.length ? 'event_updated' : 'event_created', label: `${church.name}:${nextEvent.title}` });
+      state.auditLog = await appendAuditLog({ action: hostIndex >= 0 && eventIndex < existingEvents.length ? 'event_updated' : 'event_created', label: `${host.name}:${nextEvent.title}` });
       renderMarkers();
       renderHostManager();
       renderEventManager();
-      renderHostDetails(church, startEditHost);
+      renderHostDetails(host, startEditHost);
       elements.workspaceStatus.textContent = t(state, 'eventSaved');
       resetForm();
       return;
     }
 
-    church.events = eventRows;
-    await persistChurch(church);
+    host.events = eventRows;
+    await persistHost(host);
     renderMarkers();
     renderHostManager();
     renderEventManager();
-    state.selectedHostId = church.id;
-    renderHostDetails(church, startEditHost);
-    elements.workspaceStatus.textContent = `${t(state, 'churchSaved')} ${t(state, 'hostPasscode')}: ${church.hostPasscode}`;
+    state.selectedHostId = host.id;
+    renderHostDetails(host, startEditHost);
+    elements.workspaceStatus.textContent = `${t(state, 'hostSaved')} ${t(state, 'hostPasscode')}: ${host.hostPasscode}`;
     resetForm();
   });
 
   addEventRow(elements.eventsList, elements.eventTemplate, state);
-  updateChurchOptions();
+  updateHostOptions();
   state.workspaceEventsPage = 1;
   setWorkspaceVisibility();
   renderHostManager();
