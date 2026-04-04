@@ -2,7 +2,7 @@ import { SHEETS_WEB_APP_URL } from '../config.js';
 import { loadHosts as loadLocalHosts, saveHosts as saveLocalHosts } from './storage.js';
 
 const REPORTS_KEY = 'youth-montreal-reports';
-const TITLE_REQUESTS_KEY = 'youth-montreal-title-requests';
+const HOST_REQUESTS_KEY = 'youth-montreal-host-requests';
 const AUDIT_LOG_KEY = 'youth-montreal-audit-log';
 const PENDING_SYNC_KEY = 'youth-montreal-pending-sync';
 const SYNC_URL_KEY = 'youth-montreal-sheets-url';
@@ -99,7 +99,6 @@ async function remotePost(resource, payload) {
   try {
     const response = await fetch(getRemoteUrl(), {
       method: 'POST',
-      // Use a simple request body to avoid CORS preflight issues with Apps Script web apps.
       body: JSON.stringify({ resource, payload }),
       signal: controller.signal
     }).finally(() => clearTimeout(timer));
@@ -226,8 +225,8 @@ export async function loadReports() {
   return loadList('reports', REPORTS_KEY);
 }
 
-export async function loadTitleRequests() {
-  return loadList('titleRequests', TITLE_REQUESTS_KEY);
+export async function loadHostRequests() {
+  return loadList('hostRequests', HOST_REQUESTS_KEY);
 }
 
 export async function submitReport(report) {
@@ -236,10 +235,10 @@ export async function submitReport(report) {
   await saveList('reports', REPORTS_KEY, list);
 }
 
-export async function submitTitleRequest(titleRequest) {
-  const list = await loadTitleRequests();
-  list.push(normalizeEntry(titleRequest));
-  await saveList('titleRequests', TITLE_REQUESTS_KEY, list);
+export async function submitHostRequest(hostRequest) {
+  const list = await loadHostRequests();
+  list.push(normalizeEntry(hostRequest));
+  await saveList('hostRequests', HOST_REQUESTS_KEY, list);
 }
 
 export async function updateReportStatus(id, status) {
@@ -249,22 +248,12 @@ export async function updateReportStatus(id, status) {
   return next;
 }
 
-export async function updateTitleRequestStatus(id, status) {
-  const list = await loadTitleRequests();
+export async function updateHostRequestStatus(id, status) {
+  const list = await loadHostRequests();
   const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
-  await saveList('titleRequests', TITLE_REQUESTS_KEY, next);
+  await saveList('hostRequests', HOST_REQUESTS_KEY, next);
   return next;
 }
-
-// Backward-compatible aliases during terminology migration.
-export const loadChurches = loadHosts;
-export const saveChurches = saveHosts;
-export const loadSuggestions = loadReports;
-export const loadHostRequests = loadTitleRequests;
-export const submitSuggestion = submitReport;
-export const submitHostRequest = submitTitleRequest;
-export const updateSuggestionStatus = updateReportStatus;
-export const updateHostRequestStatus = updateTitleRequestStatus;
 
 export async function loadAuditLog() {
   return readLocalList(AUDIT_LOG_KEY);

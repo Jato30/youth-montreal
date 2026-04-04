@@ -1,6 +1,6 @@
 /**
  * Youth Montreal Host Finder - Backend Workspace
- * Resource mapping: 'churches' -> 'hosts'
+ * Canonical resources: 'hosts', 'reports', 'hostRequests'
  */
 
 const CONFIG = {
@@ -10,16 +10,13 @@ const CONFIG = {
 };
 
 const RESOURCE_TO_SHEET = {
-  churches: CONFIG.SHEET_NAME_HOSTS,
   hosts: CONFIG.SHEET_NAME_HOSTS,
-  suggestions: CONFIG.SHEET_NAME_REPORTS,
   reports: CONFIG.SHEET_NAME_REPORTS,
-  hostRequests: CONFIG.SHEET_NAME_HOST_REQUESTS,
-  titleRequests: CONFIG.SHEET_NAME_HOST_REQUESTS
+  hostRequests: CONFIG.SHEET_NAME_HOST_REQUESTS
 };
 
 function resolveSheetName(resource) {
-  return RESOURCE_TO_SHEET[resource] || resource;
+  return RESOURCE_TO_SHEET[resource] || '';
 }
 
 /**
@@ -37,10 +34,11 @@ function setup() {
 
 function doGet(e) {
   const resource = e.parameter.resource;
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheetName = resolveSheetName(resource);
-  const sheet = ss.getSheetByName(sheetName);
+  if (!sheetName) return createResponse({ error: 'Resource not found' });
 
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return createResponse({ error: 'Resource not found' });
 
   const values = sheet.getDataRange().getValues();
@@ -55,8 +53,9 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     const resource = body.resource;
-    const payload = body.payload; // Supports nested arrays like host.events
+    const payload = body.payload;
     const sheetName = resolveSheetName(resource);
+    if (!sheetName) return createResponse({ error: 'Resource not found' });
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName(sheetName);
@@ -65,7 +64,6 @@ function doPost(e) {
       sheet.appendRow(['data_json']);
     }
 
-    // Overwrite row 2 with the latest JSON state
     sheet.getRange(2, 1).setValue(JSON.stringify(payload));
     return createResponse({ success: true, resource: resource });
   } catch (err) {
