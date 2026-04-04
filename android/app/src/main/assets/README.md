@@ -64,6 +64,7 @@ Mitigations now in place:
 
 
 If browser console shows `ReferenceError: autofillChurchAddress is not defined`, clear site cache / hard-refresh to load the latest JS bundle where the listener now uses `autofillHostAddress`.
+Host edit form hidden id field is now canonical: `hostId` (no `churchId` fallback).
 
 ### Terminology migration compatibility (merge-readiness)
 

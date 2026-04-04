@@ -480,19 +480,19 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     renderEventManager();
   });
 
-  elements.churchForm.elements.address.addEventListener('input', async (event) => populateAddressSuggestions(event.target.value));
-  elements.churchForm.elements.address.addEventListener('change', autofillHostAddress);
-  elements.churchForm.elements.address.addEventListener('blur', autofillHostAddress);
-  elements.churchForm.elements.hostChurchName?.addEventListener('input', () => {
-    const match = state.churches.find((church) => church.name.toLowerCase() === elements.churchForm.elements.hostChurchName.value.trim().toLowerCase());
+  elements.hostForm.elements.address.addEventListener('input', async (event) => populateAddressSuggestions(event.target.value));
+  elements.hostForm.elements.address.addEventListener('change', autofillHostAddress);
+  elements.hostForm.elements.address.addEventListener('blur', autofillHostAddress);
+  elements.hostForm.elements.hostChurchName?.addEventListener('input', () => {
+    const match = state.churches.find((church) => church.name.toLowerCase() === elements.hostForm.elements.hostChurchName.value.trim().toLowerCase());
     if (match) selectHostChurch(match);
   });
-  elements.churchForm.elements.hostChurchName?.addEventListener('change', () => {
-    const match = state.churches.find((church) => church.name.toLowerCase() === elements.churchForm.elements.hostChurchName.value.trim().toLowerCase());
+  elements.hostForm.elements.hostChurchName?.addEventListener('change', () => {
+    const match = state.churches.find((church) => church.name.toLowerCase() === elements.hostForm.elements.hostChurchName.value.trim().toLowerCase());
     if (match) selectHostChurch(match);
   });
 
-  elements.churchManagerList.addEventListener('click', async (event) => {
+  elements.hostManagerList.addEventListener('click', async (event) => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
     const churchId = button.closest('.queue-actions')?.dataset.id;
@@ -599,12 +599,12 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
   elements.cancelEditButton.addEventListener('click', resetForm);
 
   elements.deleteEditingItemButton.addEventListener('click', async () => {
-    const churchId = elements.churchForm.elements.churchId.value;
+    const churchId = elements.hostForm.elements.hostId.value;
     const church = state.churches.find((item) => item.id === churchId);
     if (!church) return;
 
     if (state.editorMode === 'event') {
-      const eventIndex = Number(elements.churchForm.elements.eventIndex.value);
+      const eventIndex = Number(elements.hostForm.elements.eventIndex.value);
       if (Number.isInteger(eventIndex) && eventIndex >= 0 && eventIndex < church.events.length) {
         if (!confirm(t(state, 'deleteEventConfirm'))) return;
         church.events.splice(eventIndex, 1);
@@ -632,10 +632,10 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
 
   map.on('click', async (event) => {
     if (elements.adminPanel.classList.contains('hidden') || state.editorMode !== 'church') return;
-    elements.churchForm.elements.lat.value = event.latlng.lat.toFixed(6);
-    elements.churchForm.elements.lng.value = event.latlng.lng.toFixed(6);
+    elements.hostForm.elements.lat.value = event.latlng.lat.toFixed(6);
+    elements.hostForm.elements.lng.value = event.latlng.lng.toFixed(6);
     updateDraftMarker(event.latlng.lat, event.latlng.lng);
-    elements.churchForm.elements.address.value = t(state, 'locateLoading');
+    elements.hostForm.elements.address.value = t(state, 'locateLoading');
     const location = await reverseGeocode(event.latlng.lat, event.latlng.lng);
     if (!location) {
       elements.adminStatus.textContent = t(state, 'addressLookupFailed');
@@ -645,14 +645,14 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     elements.adminStatus.textContent = t(state, 'addressAutofilled');
   });
 
-  elements.churchForm.addEventListener('submit', async (event) => {
+  elements.hostForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const formData = new FormData(elements.churchForm);
-    const existing = state.churches.find((item) => item.id === formData.get('churchId'));
+    const formData = new FormData(elements.hostForm);
+    const existing = state.churches.find((item) => item.id === formData.get('hostId'));
     const eventRows = readEventRows();
 
     if (state.editorMode === 'new-event') {
-      const churchId = formData.get('churchId');
+      const churchId = formData.get('hostId');
       const church = state.churches.find((item) => item.id === churchId);
       const nextEvent = eventRows[0];
       if (!church || !nextEvent) {
@@ -671,8 +671,8 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       return;
     }
 
-    const churchId = formData.get('churchId') || crypto.randomUUID();
-    if (state.isHostMode && churchId !== state.hostChurchId && formData.get('churchId')) return;
+    const churchId = formData.get('hostId') || crypto.randomUUID();
+    if (state.isHostMode && churchId !== state.hostChurchId && formData.get('hostId')) return;
     const existingEvents = existing?.events || [];
     const church = {
       id: churchId,
@@ -683,7 +683,7 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
       googlePlaceId: state.editorMode === 'event' ? existing?.googlePlaceId || '' : formData.get('googlePlaceId').trim(),
       lat: state.editorMode === 'event' ? Number(existing?.lat) : Number(formData.get('lat')),
       lng: state.editorMode === 'event' ? Number(existing?.lng) : Number(formData.get('lng')),
-      languages: state.editorMode === 'event' ? existing?.languages || [] : getCheckedValues(elements.churchForm, 'languages'),
+      languages: state.editorMode === 'event' ? existing?.languages || [] : getCheckedValues(elements.hostForm, 'languages'),
       website: state.editorMode === 'event' ? existing?.website || '' : formData.get('website').trim(),
       instagram: state.editorMode === 'event' ? existing?.instagram || '' : formData.get('instagram').trim(),
       facebook: state.editorMode === 'event' ? existing?.facebook || '' : formData.get('facebook').trim(),
