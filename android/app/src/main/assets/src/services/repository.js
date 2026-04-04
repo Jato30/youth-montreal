@@ -99,6 +99,7 @@ async function remotePost(resource, payload) {
   try {
     const response = await fetch(getRemoteUrl(), {
       method: 'POST',
+      // Use a simple request body to avoid CORS preflight issues with Apps Script web apps.
       body: JSON.stringify({ resource, payload }),
       signal: controller.signal
     }).finally(() => clearTimeout(timer));
