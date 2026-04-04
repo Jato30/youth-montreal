@@ -62,6 +62,17 @@ Mitigations now in place:
 - After a remote timeout/error, sync attempts enter a short cooldown window before retrying, preventing repeated timeout loops.
 - Manual retry still works from the sync chip and clears the cooldown immediately.
 
+### Terminology migration compatibility (merge-readiness)
+
+Internal code now standardizes on:
+
+- `host` (instead of church/place/organizer internals)
+- `event`
+- `report`
+- `titleRequest`
+
+For merge safety while all modules are being aligned, repository and app state keep backward-compatible aliases so older modules still run during transition. User-facing labels remain context-specific aliases from i18n.
+
 ### Apps Script resource mapping requirement
 
 The frontend syncs using resources: `churches`, `suggestions`, and `hostRequests`.
@@ -86,6 +97,7 @@ If cloud calls stall/fail, the UI falls back to available local data instead of 
 
 ### Sync indicator in UI
 
+- Startup now registers the sync-status click/online listeners only once (duplicate setup bindings removed) to prevent double retry side effects.
 - Header chip shows current status:
   - `Local only` → no cloud backend configured
   - `Sync pending (N)` → unsynced resources queued for retry

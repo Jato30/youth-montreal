@@ -14,7 +14,8 @@ const RESOURCE_TO_SHEET = {
   hosts: CONFIG.SHEET_NAME_HOSTS,
   suggestions: CONFIG.SHEET_NAME_REPORTS,
   reports: CONFIG.SHEET_NAME_REPORTS,
-  hostRequests: CONFIG.SHEET_NAME_HOST_REQUESTS
+  hostRequests: CONFIG.SHEET_NAME_HOST_REQUESTS,
+  titleRequests: CONFIG.SHEET_NAME_HOST_REQUESTS
 };
 
 function resolveSheetName(resource) {

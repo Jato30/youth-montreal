@@ -179,10 +179,10 @@ export async function saveHosts(hosts) {
   saveLocalHosts(hosts);
   if (canAttemptRemote()) {
     try {
-      await remotePost('churches', churches);
-      clearPending('churches');
+      await remotePost('hosts', hosts);
+      clearPending('hosts');
     } catch (error) {
-      markPending('churches', churches, error instanceof Error ? error.message : String(error));
+      markPending('hosts', hosts, error instanceof Error ? error.message : String(error));
     }
   }
 }
@@ -238,23 +238,33 @@ export async function submitReport(report) {
 
 export async function submitTitleRequest(titleRequest) {
   const list = await loadTitleRequests();
-  list.push(normalizeEntry(request));
-  await saveList('hostRequests', HOST_REQUESTS_KEY, list);
+  list.push(normalizeEntry(titleRequest));
+  await saveList('titleRequests', TITLE_REQUESTS_KEY, list);
 }
 
-export async function updateSuggestionStatus(id, status) {
-  const list = await loadSuggestions();
+export async function updateReportStatus(id, status) {
+  const list = await loadReports();
   const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
-  await saveList('suggestions', SUGGESTIONS_KEY, next);
+  await saveList('reports', REPORTS_KEY, next);
   return next;
 }
 
-export async function updateHostRequestStatus(id, status) {
-  const list = await loadHostRequests();
+export async function updateTitleRequestStatus(id, status) {
+  const list = await loadTitleRequests();
   const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
-  await saveList('hostRequests', HOST_REQUESTS_KEY, next);
+  await saveList('titleRequests', TITLE_REQUESTS_KEY, next);
   return next;
 }
+
+// Backward-compatible aliases during terminology migration.
+export const loadChurches = loadHosts;
+export const saveChurches = saveHosts;
+export const loadSuggestions = loadReports;
+export const loadHostRequests = loadTitleRequests;
+export const submitSuggestion = submitReport;
+export const submitHostRequest = submitTitleRequest;
+export const updateSuggestionStatus = updateReportStatus;
+export const updateHostRequestStatus = updateTitleRequestStatus;
 
 export async function loadAuditLog() {
   return readLocalList(AUDIT_LOG_KEY);

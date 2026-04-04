@@ -118,6 +118,39 @@ const state = {
 
 const map = createMap();
 
+
+// Backward-compatible element aliases during terminology migration.
+elements.suggestionsQueue = elements.reportsQueue;
+elements.hostQueue = elements.titleQueue;
+elements.addChurchButton = elements.addHostButton;
+elements.churchForm = elements.hostForm;
+elements.hostRequestForm = elements.titleRequestForm;
+elements.hostRequestStatus = elements.titleRequestStatus;
+elements.hostRequestPanel = elements.titleRequestPanel;
+elements.hostRequestCancel = elements.titleRequestCancel;
+elements.toggleHostRequest = elements.toggleTitleRequest;
+elements.churchManagerSearch = elements.hostManagerSearch;
+elements.churchSearchWrap = elements.hostSearchWrap;
+elements.toggleChurchSearch = elements.toggleHostSearch;
+elements.churchManagerList = elements.hostManagerList;
+elements.myChurchSection = elements.myHostSection;
+
+function defineAlias(obj, aliasKey, primaryKey) {
+  Object.defineProperty(obj, aliasKey, {
+    get() { return obj[primaryKey]; },
+    set(value) { obj[primaryKey] = value; },
+    configurable: true,
+    enumerable: false
+  });
+}
+
+defineAlias(state, 'churches', 'hosts');
+defineAlias(state, 'suggestions', 'reports');
+defineAlias(state, 'hostRequests', 'titleRequests');
+defineAlias(state, 'selectedChurchId', 'selectedHostId');
+defineAlias(state, 'hostChurchId', 'hostHostId');
+defineAlias(state, 'onMapChurchSelect', 'onMapHostSelect');
+
 function setupMapResizeSupport() {
   const refreshMapSize = () => {
     requestAnimationFrame(() => map.invalidateSize());
@@ -180,7 +213,7 @@ function showStaticPage(targetId) {
 
 function openPlaceSuggestion(host) {
   scrollToSection('contact-us');
-  if (elements.hostRequestPanel) elements.hostRequestPanel.classList.add('hidden');
+  if (elements.titleRequestPanel) elements.titleRequestPanel.classList.add('hidden');
   if (elements.contactForm) {
     elements.contactForm.elements.subject.value = `${t(state, 'suggestPlaceUpdate')}: ${host.name}`;
     elements.contactForm.elements.message.value = '';
@@ -191,7 +224,7 @@ function openPlaceSuggestion(host) {
 
 function openEventSuggestion(host, eventData) {
   scrollToSection('contact-us');
-  if (elements.hostRequestPanel) elements.hostRequestPanel.classList.add('hidden');
+  if (elements.titleRequestPanel) elements.titleRequestPanel.classList.add('hidden');
   if (elements.contactForm) {
     elements.contactForm.elements.subject.value = `${t(state, 'suggestEventUpdate')}: ${host.name} — ${eventData.type}`;
     elements.contactForm.elements.message.value = '';
@@ -377,45 +410,6 @@ function setupSyncStatus() {
   window.addEventListener('online', () => retryPendingSync());
 }
 
-function setupSyncStatus() {
-  if (!elements.syncStatus) return;
-
-  const updateSyncStatus = (syncState = getSyncState()) => {
-    const { hasRemote, pendingCount } = syncState;
-    const activeUrl = getConfiguredSyncUrl();
-    elements.syncStatus.classList.remove('sync-local', 'sync-pending', 'sync-ok');
-    if (!hasRemote) {
-      elements.syncStatus.classList.add('sync-local');
-      elements.syncStatus.textContent = t(state, 'syncLocalOnly');
-      elements.syncStatus.title = t(state, 'syncLocalOnlyHint');
-      return;
-    }
-    if (pendingCount > 0) {
-      elements.syncStatus.classList.add('sync-pending');
-      elements.syncStatus.textContent = `${t(state, 'syncPending')} (${pendingCount})`;
-      elements.syncStatus.title = `${t(state, 'syncPendingHint')}${activeUrl ? `\n${t(state, 'syncEndpoint')}: ${activeUrl}` : ''}`;
-      return;
-    }
-    elements.syncStatus.classList.add('sync-ok');
-    elements.syncStatus.textContent = t(state, 'syncUpToDate');
-    elements.syncStatus.title = `${t(state, 'syncUpToDateHint')}${activeUrl ? `\n${t(state, 'syncEndpoint')}: ${activeUrl}` : ''}`;
-  };
-
-  elements.syncStatus.addEventListener('click', async () => {
-    const syncState = getSyncState();
-    if (!syncState.hasRemote) {
-      const url = prompt(t(state, 'enterSyncUrlPrompt'), getConfiguredSyncUrl() || '');
-      if (url === null) return;
-      setConfiguredSyncUrl(url);
-      if (!String(url || '').trim()) return;
-    }
-    await retryPendingSync();
-  });
-  elements.syncStatus.addEventListener('sync-refresh', () => updateSyncStatus());
-  subscribeSyncState(updateSyncStatus);
-  window.addEventListener('online', () => retryPendingSync());
-}
-
 function setupMapFilters(finderController) {
   const syncRadiusLabel = () => {
     const radiusKm = Number(elements.finderForm.elements.radiusKm.value);
@@ -458,7 +452,7 @@ function setupMapFilters(finderController) {
     finderController.clearLocationFilter();
     syncRadiusLabel();
     resetMapView(map);
-    state.selectedChurchId = null;
+    state.selectedHostId = null;
     elements.details.classList.add('hidden');
     elements.emptyState.classList.remove('hidden');
     rerenderMarkers();
@@ -470,44 +464,44 @@ function setupMapFilters(finderController) {
 }
 
 function setupPublicForms() {
-  const toggleHostRequestMode = (showHostRequest) => {
-    elements.contactFormPanel.classList.toggle('hidden', showHostRequest);
-    elements.hostRequestPanel.classList.toggle('hidden', !showHostRequest);
+  const toggleTitleRequestMode = (showTitleRequest) => {
+    elements.contactFormPanel.classList.toggle('hidden', showTitleRequest);
+    elements.titleRequestPanel.classList.toggle('hidden', !showTitleRequest);
   };
 
   elements.contactForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(elements.contactForm).entries());
-    await submitSuggestion({ id: crypto.randomUUID(), type: 'contact', ...data, createdAt: new Date().toISOString() });
-    state.suggestions = await loadSuggestions();
-    state.auditLog = await appendAuditLog({ action: 'suggestion_submitted', label: data.subject || 'contact' });
+    await submitReport({ id: crypto.randomUUID(), type: 'contact', ...data, createdAt: new Date().toISOString() });
+    state.reports = await loadReports();
+    state.auditLog = await appendAuditLog({ action: 'report_submitted', label: data.subject || 'contact' });
     elements.contactForm.reset();
     elements.contactStatus.textContent = t(state, 'suggestionSubmitted');
     renderAuditLog();
     if (state.isAdminMode || state.isHostMode) renderModeration();
   });
 
-  elements.toggleHostRequest?.addEventListener('click', () => {
-    toggleHostRequestMode(true);
-    if (!elements.hostRequestPanel.classList.contains('hidden')) {
-      elements.hostRequestForm.elements.fullName.focus();
+  elements.toggleTitleRequest?.addEventListener('click', () => {
+    toggleTitleRequestMode(true);
+    if (!elements.titleRequestPanel.classList.contains('hidden')) {
+      elements.titleRequestForm.elements.fullName.focus();
     }
   });
 
-  elements.hostRequestCancel?.addEventListener('click', () => {
-    toggleHostRequestMode(false);
-    elements.hostRequestStatus.textContent = '';
+  elements.titleRequestCancel?.addEventListener('click', () => {
+    toggleTitleRequestMode(false);
+    elements.titleRequestStatus.textContent = '';
   });
 
-  elements.hostRequestForm.addEventListener('submit', async (event) => {
+  elements.titleRequestForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const data = Object.fromEntries(new FormData(elements.hostRequestForm).entries());
-    await submitHostRequest({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
-    state.hostRequests = await loadHostRequests();
-    state.auditLog = await appendAuditLog({ action: 'host_request_submitted', label: data.churchName || 'host request' });
-    elements.hostRequestForm.reset();
-    elements.hostRequestStatus.textContent = t(state, 'hostRequestSubmitted');
-    toggleHostRequestMode(false);
+    const data = Object.fromEntries(new FormData(elements.titleRequestForm).entries());
+    await submitTitleRequest({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
+    state.titleRequests = await loadTitleRequests();
+    state.auditLog = await appendAuditLog({ action: 'title_request_submitted', label: data.churchName || 'host request' });
+    elements.titleRequestForm.reset();
+    elements.titleRequestStatus.textContent = t(state, 'hostRequestSubmitted');
+    toggleTitleRequestMode(false);
     renderAuditLog();
     if (state.isAdminMode) renderModeration();
   });
@@ -538,8 +532,8 @@ function setupHardeningTools() {
     if (!file) return;
     const text = await file.text();
     const data = JSON.parse(text);
-    if (Array.isArray(data.churches)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.churches));
+    if (Array.isArray(data.hosts)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data.hosts));
       state.auditLog = await appendAuditLog({ action: 'backup_imported', label: file.name });
       location.reload();
     }
