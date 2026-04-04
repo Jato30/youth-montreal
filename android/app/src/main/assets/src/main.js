@@ -1,5 +1,5 @@
 import { LANGUAGE_KEY, STORAGE_KEY } from './config.js';
-import { appendAuditLog, getConfiguredSyncUrl, getSyncState, loadAuditLog, loadHosts, loadTitleRequests, loadReports, retryPendingSync, saveHosts, setConfiguredSyncUrl, subscribeSyncState, submitTitleRequest, submitReport } from './services/repository.js';
+import { appendAuditLog, getConfiguredSyncUrl, getSyncState, loadAuditLog, loadHosts, loadHostRequests, loadReports, retryPendingSync, saveHosts, setConfiguredSyncUrl, subscribeSyncState, submitHostRequest, submitReport } from './services/repository.js';
 import { createMap, renderMarkers, resetMapView } from './ui/mapView.js';
 import { renderHostDetails } from './ui/detailsView.js';
 import { attachAdminController } from './controllers/adminController.js';
@@ -99,7 +99,7 @@ const elements = {
 const state = {
   hosts: [],
   reports: [],
-  titleRequests: [],
+  hostRequests: [],
   auditLog: [],
   markers: new Map(),
   filteredIds: null,
@@ -146,7 +146,6 @@ function defineAlias(obj, aliasKey, primaryKey) {
 
 defineAlias(state, 'churches', 'hosts');
 defineAlias(state, 'suggestions', 'reports');
-defineAlias(state, 'hostRequests', 'titleRequests');
 defineAlias(state, 'selectedChurchId', 'selectedHostId');
 defineAlias(state, 'hostChurchId', 'hostHostId');
 defineAlias(state, 'onMapChurchSelect', 'onMapHostSelect');
@@ -496,8 +495,8 @@ function setupPublicForms() {
   elements.titleRequestForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = Object.fromEntries(new FormData(elements.titleRequestForm).entries());
-    await submitTitleRequest({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
-    state.titleRequests = await loadTitleRequests();
+    await submitHostRequest({ id: crypto.randomUUID(), ...data, createdAt: new Date().toISOString() });
+    state.hostRequests = await loadHostRequests();
     state.auditLog = await appendAuditLog({ action: 'title_request_submitted', label: data.churchName || 'host request' });
     elements.titleRequestForm.reset();
     elements.titleRequestStatus.textContent = t(state, 'hostRequestSubmitted');
@@ -513,7 +512,7 @@ function setupHardeningTools() {
       exportedAt: new Date().toISOString(),
       hosts: state.hosts,
       reports: state.reports,
-      titleRequests: state.titleRequests,
+      hostRequests: state.hostRequests,
       auditLog: state.auditLog
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -632,15 +631,15 @@ async function init() {
       retryPendingSync(),
       new Promise((resolve) => setTimeout(resolve, 9000))
     ]);
-    const [hosts, reports, titleRequests, auditLog] = await Promise.all([
+    const [hosts, reports, hostRequests, auditLog] = await Promise.all([
       loadHosts(),
       loadReports(),
-      loadTitleRequests(),
+      loadHostRequests(),
       loadAuditLog()
     ]);
     state.hosts = hosts;
     state.reports = reports;
-    state.titleRequests = titleRequests;
+    state.hostRequests = hostRequests;
     state.auditLog = auditLog;
 
     const adminController = attachAdminController({
