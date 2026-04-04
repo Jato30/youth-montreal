@@ -84,6 +84,8 @@ Your Apps Script backend must map those resources to sheet tabs:
 
 Without this exact mapping, reads/writes can fail for host data and leave sync pending forever.
 
+Note: for canonical resource names, backend GET now auto-creates missing tabs with `data_json` header and returns an empty list (so a missing `reports`/`hostRequests` tab no longer blocks loading `hosts`).
+
 Migration tip (required when moving from old builds):
 - Google Sheets: keep tab name as `hosts` (you already renamed it).
 - Browser local data: open DevTools -> Application (or Storage) -> Local Storage -> your app origin and delete `youth-montreal-churches`; the app now uses `youth-montreal-hosts`.

@@ -38,8 +38,12 @@ function doGet(e) {
   if (!sheetName) return createResponse({ error: 'Resource not found' });
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return createResponse({ error: 'Resource not found' });
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    sheet.appendRow(['data_json']);
+    return createResponse({ [resource]: [] });
+  }
 
   const values = sheet.getDataRange().getValues();
   const data = values.length > 1 ? JSON.parse(values[1][0]) : [];
