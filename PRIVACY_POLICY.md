@@ -136,7 +136,7 @@ We may update this policy from time to time. We will post the updated version wi
 For privacy questions or requests, contact:
 
 - **Organization:** Youth Montreal
-- **Email:** `privacy@youthmontreal.com` *(replace with your real privacy contact email before publishing)*
+- **Email:** `privacy@youthmontreal.org` *(replace with your real privacy contact email before publishing)*
 - **Address:** `2987 rue de Stockholm, Laval, QC, Canada. H7K 3T6` *(replace/add full legal mailing address if available)*
 
 ---
