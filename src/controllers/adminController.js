@@ -3,6 +3,7 @@ import { appendAuditLog, saveHosts, updateHostRequestStatus, updateReportStatus 
 import { t } from '../i18n.js';
 import { ADM_PASSCODE } from '../config.js';
 import { normalizeAddress, shortenAddress } from '../utils/address.js';
+import { dedupeHosts, findDuplicateHost } from '../utils/hostDedup.js';
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 const hostCode = () => `H-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -196,7 +197,8 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     updateHostOptions();
     const query = elements.hostManagerSearch?.value.trim().toLowerCase() || '';
     const visibleHosts = state.isHostMode ? state.hosts.filter((host) => host.id === state.activeHostId) : state.hosts;
-    const rows = visibleHosts.filter((host) => `${host.name} ${host.address || ''}`.toLowerCase().includes(query));
+    const dedupedHosts = dedupeHosts(visibleHosts).deduped;
+    const rows = dedupedHosts.filter((host) => `${host.name} ${host.address || ''}`.toLowerCase().includes(query));
 
     elements.hostManagerList.innerHTML = rows.length
       ? rows.map((host) => `
@@ -711,6 +713,12 @@ export function attachAdminController({ state, map, elements, renderMarkers, ren
     }
 
     host.events = eventRows;
+
+    const duplicate = findDuplicateHost(state.hosts, host, host.id);
+    if (duplicate) {
+      elements.adminStatus.textContent = `${t(state, 'duplicateHostBlocked')} ${duplicate.name} — ${shortenAddress(duplicate.address)}`;
+      return;
+    }
     await persistHost(host);
     renderMarkers();
     renderHostManager();

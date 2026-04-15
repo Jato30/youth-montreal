@@ -118,6 +118,13 @@ If you reintroduce custom `Content-Type: application/json`, some deployments may
 Initialization now uses a bounded retry window for startup sync and always clears the loading overlay in a `finally` block.  
 If cloud calls stall/fail, the UI falls back to available local data instead of staying blocked behind the loader.
 
+### Duplicate-host protection (ADM + host workspace)
+
+- Host saves now run a duplicate analysis before persist.
+- Duplicate identity is detected primarily from normalized address (accent-insensitive + compact address normalization), with a coordinate/name fallback for near-identical pins.
+- If a duplicate is detected, save is blocked and the UI points to the existing host entry.
+- Startup and live-sync host loads are deduplicated automatically, and cleaned data is persisted back to storage/cloud to avoid repeat duplicates across devices.
+
 ### Sync indicator in UI
 
 - Startup now registers the sync-status click/online listeners only once (duplicate setup bindings removed) to prevent double retry side effects.

@@ -6,6 +6,7 @@ import { attachAdminController } from './controllers/adminController.js';
 import { attachFinderController } from './controllers/finderController.js';
 import { renderCalendarList } from './ui/calendarView.js';
 import { applyLanguage, TRANSLATIONS, t } from './i18n.js';
+import { dedupeHosts } from './utils/hostDedup.js';
 
 const elements = {
   details: document.querySelector('#details'),
@@ -580,10 +581,11 @@ function setupAutoSync() {
     if (document.body.classList.contains('editing-mode')) return;
 
     const remoteHosts = await loadHosts();
+    const dedupedRemote = dedupeHosts(remoteHosts).deduped;
 
     // Check if anything actually changed
-    if (JSON.stringify(remoteHosts) !== JSON.stringify(state.hosts)) {
-      state.hosts = remoteHosts;
+    if (JSON.stringify(dedupedRemote) !== JSON.stringify(state.hosts)) {
+      state.hosts = dedupedRemote;
       rerenderMarkers();
       updateCalendarList();
       renderHostManager();
@@ -605,10 +607,19 @@ async function init() {
       loadHostRequests(),
       loadAuditLog()
     ]);
-    state.hosts = hosts;
+    const dedupedHostsResult = dedupeHosts(hosts);
+    state.hosts = dedupedHostsResult.deduped;
     state.reports = reports;
     state.hostRequests = hostRequests;
     state.auditLog = auditLog;
+
+    if (dedupedHostsResult.removed.length) {
+      await saveHosts(state.hosts);
+      state.auditLog = await appendAuditLog({
+        action: 'hosts_deduplicated',
+        label: `${dedupedHostsResult.removed.length} duplicate host entries removed`
+      });
+    }
 
     const adminController = attachAdminController({
       state,
