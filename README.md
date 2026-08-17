@@ -302,3 +302,11 @@ Canonical backend entities used by the Apps Script backend and sync contract:
 - `report`
 
 `hostMembership` supports many accounts managing one host without creating duplicate host map pins. Approved memberships all render the same host profile in the workspace; only `new_host` approvals create a new host location entry. ADM authority is enforced with a server-side allowlist in Apps Script (`google-sheets-backend.gs`).
+
+### Live event backend contract
+
+Live event collaboration is persisted with two canonical backend resources. `liveEvent` rows use only these canonical fields for the event itself: `id`, `title`, `titleBase`, `description`, `status`, `joinCode`, `createdByAccountId`, `createdByHostId`, `startedAt`, `endedAt`, and `filters`. Active live event titles are unique; when a new active event reuses an active title, the backend assigns the next available suffix such as `Title (2)` or `Title (3)` and returns the assigned `title` to the UI.
+
+`liveEventParticipant` rows use these canonical fields: `liveEventId`, `hostId`, `accountId`, `isLead`, `joinedAt`, `lastLocationAt`, `speedKmh`, and `isSharingEnabled`. Hosts join active live events with `joinCode`; ADMs can join any active live event without a code. Location publishing must always be validated by the backend: the publishing account must be an active member of the host, unless the account is an ADM.
+
+While Apps Script remains the temporary backend, `src/services/google-sheets-backend.gs` owns resource resolution for both `liveEvents` and `liveEventParticipants`, plus the `createLiveEvent`, `joinLiveEvent`, and `publishLiveEventParticipantLocation` actions. The web adapter in `src/services/repository.js` mirrors those operations locally for offline fallback and sends the same actions to Apps Script when a sync URL is configured.

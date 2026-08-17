@@ -28,6 +28,16 @@ const RESOURCE_CONFIG = {
     sheetName: 'hostRequests',
     resourceAliases: ['hostrequest', 'hostrequests', 'title request', 'title requests', 'titlerequest', 'titlerequests'],
     sheetAliases: ['hostrequest', 'hostrequests', 'title request', 'title requests', 'titlerequest', 'titlerequests']
+  },
+  liveEvents: {
+    sheetName: 'liveEvents',
+    resourceAliases: ['liveevent', 'liveevents', 'live event', 'live events'],
+    sheetAliases: ['liveevent', 'liveevents', 'live event', 'live events']
+  },
+  liveEventParticipants: {
+    sheetName: 'liveEventParticipants',
+    resourceAliases: ['liveeventparticipant', 'liveeventparticipants', 'live event participant', 'live event participants'],
+    sheetAliases: ['liveeventparticipant', 'liveeventparticipants', 'live event participant', 'live event participants']
   }
 };
 
@@ -115,6 +125,9 @@ function doPost(e) {
     const body = JSON.parse(e.postData.contents);
     if (body.action === 'verifySession') return createResponse(handleVerifySession(body));
     if (body.action === 'exchangeHostAccessCode') return createResponse(handleExchangeHostAccessCode(body));
+    if (body.action === 'createLiveEvent') return createResponse(handleCreateLiveEvent(body));
+    if (body.action === 'joinLiveEvent') return createResponse(handleJoinLiveEvent(body));
+    if (body.action === 'publishLiveEventParticipantLocation') return createResponse(handlePublishLiveEventParticipantLocation(body));
     const resolved = resolveSheet(body.resource, SpreadsheetApp.getActiveSpreadsheet());
     if (!resolved) return createResponse({ error: 'Resource not found' });
     resolved.sheet.getRange(2, 1).setValue(JSON.stringify(body.payload));
@@ -147,6 +160,110 @@ function handleExchangeHostAccessCode(body) {
   membership.sessionIssuedAt = new Date().toISOString();
   writeResourceList('hostMemberships', memberships);
   return { valid: true, token, accountId: membership.accountId, hostMembership: membership };
+}
+
+
+function normalizeLiveEvent(entry) {
+  const now = new Date().toISOString();
+  const titleBase = String(entry && (entry.titleBase || entry.title) || '').trim() || 'Live Event';
+  return {
+    id: entry && entry.id || Utilities.getUuid(),
+    title: String(entry && entry.title || titleBase).trim(),
+    titleBase: titleBase,
+    description: String(entry && entry.description || ''),
+    status: entry && entry.status || 'active',
+    joinCode: String(entry && entry.joinCode || '').trim(),
+    createdByAccountId: String(entry && entry.createdByAccountId || ''),
+    createdByHostId: String(entry && entry.createdByHostId || ''),
+    startedAt: entry && entry.startedAt || now,
+    endedAt: entry && entry.endedAt || '',
+    filters: entry && entry.filters && typeof entry.filters === 'object' ? entry.filters : {}
+  };
+}
+
+function normalizeLiveEventParticipant(entry) {
+  return {
+    liveEventId: String(entry && entry.liveEventId || ''),
+    hostId: String(entry && entry.hostId || ''),
+    accountId: String(entry && entry.accountId || ''),
+    isLead: Boolean(entry && entry.isLead),
+    joinedAt: entry && entry.joinedAt || new Date().toISOString(),
+    lastLocationAt: entry && entry.lastLocationAt || '',
+    speedKmh: Number(entry && entry.speedKmh) || 0,
+    isSharingEnabled: !(entry && entry.isSharingEnabled === false)
+  };
+}
+
+function resolveUniqueLiveEventTitle(titleBase, liveEvents, currentId) {
+  const normalizedBase = String(titleBase || '').trim() || 'Live Event';
+  const activeTitles = (liveEvents || [])
+    .filter(function(event) { return event.status === 'active' && event.id !== currentId; })
+    .map(function(event) { return String(event.title || '').trim().toLowerCase(); });
+  let candidate = normalizedBase;
+  let suffix = 2;
+  while (activeTitles.indexOf(candidate.toLowerCase()) >= 0) {
+    candidate = normalizedBase + ' (' + suffix + ')';
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function isAdmAccount(accountId) {
+  const accounts = readResourceList('accounts');
+  const account = accounts.find(function(item) { return item.id === accountId; });
+  return Boolean(account && ADM_ALLOWLIST.indexOf(String(account.email || '').toLowerCase()) >= 0);
+}
+
+function isActiveHostMember(accountId, hostId) {
+  const memberships = readResourceList('hostMemberships');
+  return memberships.some(function(item) {
+    return item.accountId === accountId && item.hostId === hostId && item.status !== 'revoked';
+  });
+}
+
+function handleCreateLiveEvent(body) {
+  const liveEvents = readResourceList('liveEvents').map(normalizeLiveEvent);
+  const liveEvent = normalizeLiveEvent(body.liveEvent || {});
+  liveEvent.titleBase = liveEvent.titleBase || liveEvent.title;
+  liveEvent.title = resolveUniqueLiveEventTitle(liveEvent.titleBase, liveEvents, liveEvent.id);
+  liveEvents.push(liveEvent);
+  writeResourceList('liveEvents', liveEvents);
+  return { success: true, liveEvent: liveEvent };
+}
+
+function handleJoinLiveEvent(body) {
+  const liveEvents = readResourceList('liveEvents').map(normalizeLiveEvent);
+  const liveEvent = liveEvents.find(function(event) { return event.id === body.liveEventId && event.status === 'active'; });
+  if (!liveEvent) return { error: 'Live event not found' };
+  const adm = Boolean(body.isAdm) || isAdmAccount(String(body.accountId || ''));
+  if (!adm && liveEvent.joinCode !== String(body.joinCode || '').trim()) return { error: 'Invalid join code' };
+  if (!adm && !isActiveHostMember(String(body.accountId || ''), String(body.hostId || ''))) return { error: 'Only host members can join for this host' };
+  const participants = readResourceList('liveEventParticipants').map(normalizeLiveEventParticipant);
+  const participant = normalizeLiveEventParticipant({ liveEventId: liveEvent.id, hostId: body.hostId, accountId: body.accountId, isLead: body.isLead });
+  const next = participants.filter(function(item) {
+    return !(item.liveEventId === participant.liveEventId && item.hostId === participant.hostId && item.accountId === participant.accountId);
+  });
+  next.push(participant);
+  writeResourceList('liveEventParticipants', next);
+  return { success: true, participant: participant };
+}
+
+function handlePublishLiveEventParticipantLocation(body) {
+  const accountId = String(body.accountId || '');
+  const hostId = String(body.hostId || '');
+  const adm = Boolean(body.isAdm) || isAdmAccount(accountId);
+  if (!adm && !isActiveHostMember(accountId, hostId)) return { error: 'Only host members can publish this host location' };
+  const liveEvents = readResourceList('liveEvents').map(normalizeLiveEvent);
+  if (!liveEvents.some(function(event) { return event.id === body.liveEventId && event.status === 'active'; })) return { error: 'Live event not found' };
+  const participants = readResourceList('liveEventParticipants').map(normalizeLiveEventParticipant);
+  const index = participants.findIndex(function(item) { return item.liveEventId === body.liveEventId && item.hostId === hostId && item.accountId === accountId; });
+  const participant = normalizeLiveEventParticipant(index >= 0 ? participants[index] : { liveEventId: body.liveEventId, hostId: hostId, accountId: accountId });
+  participant.lastLocationAt = new Date().toISOString();
+  participant.speedKmh = Number(body.speedKmh) || 0;
+  participant.isSharingEnabled = body.isSharingEnabled !== false;
+  if (index >= 0) participants[index] = participant; else participants.push(participant);
+  writeResourceList('liveEventParticipants', participants);
+  return { success: true, participant: participant };
 }
 
 function toCamelCase(value) {
