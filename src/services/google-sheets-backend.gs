@@ -188,7 +188,13 @@ function normalizeLiveEventParticipant(entry) {
     accountId: String(entry && entry.accountId || ''),
     isLead: Boolean(entry && entry.isLead),
     joinedAt: entry && entry.joinedAt || new Date().toISOString(),
-    lastLocationAt: entry && entry.lastLocationAt || '',
+    capturedAt: entry && (entry.capturedAt || entry.lastLocationAt) || '',
+    lastLocationAt: entry && (entry.lastLocationAt || entry.capturedAt) || '',
+    lat: Number(entry && (entry.lat || entry.latitude)) || null,
+    lng: Number(entry && (entry.lng || entry.longitude)) || null,
+    latitude: Number(entry && (entry.latitude || entry.lat)) || null,
+    longitude: Number(entry && (entry.longitude || entry.lng)) || null,
+    accuracyMeters: Number(entry && entry.accuracyMeters) || 0,
     speedKmh: Number(entry && entry.speedKmh) || 0,
     isSharingEnabled: !(entry && entry.isSharingEnabled === false)
   };
@@ -257,8 +263,19 @@ function handlePublishLiveEventParticipantLocation(body) {
   if (!liveEvents.some(function(event) { return event.id === body.liveEventId && event.status === 'active'; })) return { error: 'Live event not found' };
   const participants = readResourceList('liveEventParticipants').map(normalizeLiveEventParticipant);
   const index = participants.findIndex(function(item) { return item.liveEventId === body.liveEventId && item.hostId === hostId && item.accountId === accountId; });
-  const participant = normalizeLiveEventParticipant(index >= 0 ? participants[index] : { liveEventId: body.liveEventId, hostId: hostId, accountId: accountId });
-  participant.lastLocationAt = new Date().toISOString();
+  const existing = index >= 0 ? participants[index] : null;
+  const capturedAt = body.capturedAt || new Date().toISOString();
+  const capturedTime = new Date(capturedAt).getTime();
+  const existingTime = new Date(existing && (existing.capturedAt || existing.lastLocationAt) || 0).getTime();
+  if (existing && !isNaN(existingTime) && !isNaN(capturedTime) && capturedTime <= existingTime) return { error: 'Stale or out-of-order live event location' };
+  const participant = normalizeLiveEventParticipant(existing || { liveEventId: body.liveEventId, hostId: hostId, accountId: accountId });
+  participant.capturedAt = capturedAt;
+  participant.lastLocationAt = capturedAt;
+  participant.lat = Number(body.lat || body.latitude);
+  participant.lng = Number(body.lng || body.longitude);
+  participant.latitude = participant.lat;
+  participant.longitude = participant.lng;
+  participant.accuracyMeters = Number(body.accuracyMeters) || 0;
   participant.speedKmh = Number(body.speedKmh) || 0;
   participant.isSharingEnabled = body.isSharingEnabled !== false;
   if (index >= 0) participants[index] = participant; else participants.push(participant);

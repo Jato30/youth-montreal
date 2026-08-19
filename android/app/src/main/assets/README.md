@@ -285,3 +285,9 @@ This repository now includes:
 - Replace placeholder contact email/address in both files.
 - Keep Play Console Data Safety answers aligned with policy content (location + calendar permissions and purposes).
 - [ ] Promote tested release to Production
+
+### Live event participant location sharing
+
+Live event participant location sharing uses canonical backend terms: `liveEvent` and `liveEventParticipant`. The client-side scheduler lives in `src/services/live-location-scheduler.js` and should be started only after a host member/admin explicitly begins live sharing. It captures `capturedAt`, `lat`, `lng`, `speedKmh`, and `accuracyMeters` for each update. The scheduler keeps the previous coordinate and timestamp locally to compute speed; it publishes every 180 seconds by default and temporarily switches to every 30 seconds when computed speed is greater than 5 km/h.
+
+The backend endpoint `publishLiveEventParticipantLocation` in `src/services/google-sheets-backend.gs` rejects stale or out-of-order participant updates by comparing the submitted `capturedAt` against the stored participant timestamp, then stores the latest location on the matching `liveEventParticipant`. Map code can call `isLiveParticipantLocationStale` from the scheduler module and `liveParticipantMarkerOptions` from `src/ui/mapView.js` to downgrade participant markers when the most recent update is older than six minutes. The scheduler writes audit actions for `live_sharing_started`, `live_sharing_stopped`, and repeated location failures (`live_location_repeated_failures`).
