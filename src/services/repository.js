@@ -206,7 +206,13 @@ function normalizeLiveEventParticipant(entry = {}) {
     accountId: String(entry.accountId || ''),
     isLead: Boolean(entry.isLead),
     joinedAt: entry.joinedAt || new Date().toISOString(),
-    lastLocationAt: entry.lastLocationAt || '',
+    capturedAt: entry.capturedAt || entry.lastLocationAt || '',
+    lastLocationAt: entry.lastLocationAt || entry.capturedAt || '',
+    lat: Number.isFinite(Number(entry.lat ?? entry.latitude)) ? Number(entry.lat ?? entry.latitude) : null,
+    lng: Number.isFinite(Number(entry.lng ?? entry.longitude)) ? Number(entry.lng ?? entry.longitude) : null,
+    latitude: Number.isFinite(Number(entry.latitude ?? entry.lat)) ? Number(entry.latitude ?? entry.lat) : null,
+    longitude: Number.isFinite(Number(entry.longitude ?? entry.lng)) ? Number(entry.longitude ?? entry.lng) : null,
+    accuracyMeters: Number.isFinite(Number(entry.accuracyMeters)) ? Number(entry.accuracyMeters) : 0,
     speedKmh: Number.isFinite(Number(entry.speedKmh)) ? Number(entry.speedKmh) : 0,
     isSharingEnabled: entry.isSharingEnabled !== false
   };
@@ -459,9 +465,9 @@ export async function joinLiveEvent({ liveEventId = '', joinCode = '', hostId = 
   return participant;
 }
 
-export async function publishLiveEventParticipantLocation({ liveEventId = '', hostId = '', accountId = '', isAdm = false, latitude, longitude, speedKmh = 0, isSharingEnabled = true }) {
+export async function publishLiveEventParticipantLocation({ liveEventId = '', hostId = '', accountId = '', isAdm = false, capturedAt = new Date().toISOString(), lat, lng, latitude = lat, longitude = lng, speedKmh = 0, accuracyMeters = 0, isSharingEnabled = true }) {
   if (canAttemptRemote('liveEventParticipants')) {
-    const result = await remotePostJson({ action: 'publishLiveEventParticipantLocation', liveEventId, hostId, accountId, isAdm, latitude, longitude, speedKmh, isSharingEnabled });
+    const result = await remotePostJson({ action: 'publishLiveEventParticipantLocation', liveEventId, hostId, accountId, isAdm, capturedAt, lat: latitude, lng: longitude, latitude, longitude, speedKmh, accuracyMeters, isSharingEnabled });
     if (result?.participant) return normalizeLiveEventParticipant(result.participant);
     throw new Error(result?.error || 'Unable to publish live event location');
   }
@@ -472,10 +478,12 @@ export async function publishLiveEventParticipantLocation({ liveEventId = '', ho
   if (!liveEvents.some((event) => event.id === liveEventId && event.status === 'active')) throw new Error('Live event not found');
   const participants = await loadLiveEventParticipants();
   const index = participants.findIndex((item) => item.liveEventId === liveEventId && item.hostId === hostId && item.accountId === accountId);
-  const patch = { lastLocationAt: new Date().toISOString(), latitude: Number(latitude), longitude: Number(longitude), speedKmh: Number(speedKmh) || 0, isSharingEnabled };
-  const participant = normalizeLiveEventParticipant({ ...(participants[index] || { liveEventId, hostId, accountId }), ...patch });
-  participant.latitude = patch.latitude;
-  participant.longitude = patch.longitude;
+  const existing = participants[index];
+  const capturedTime = new Date(capturedAt).getTime();
+  const existingTime = new Date(existing?.capturedAt || existing?.lastLocationAt || 0).getTime();
+  if (Number.isFinite(existingTime) && Number.isFinite(capturedTime) && capturedTime <= existingTime) throw new Error('Stale or out-of-order live event location');
+  const patch = { capturedAt, lastLocationAt: capturedAt, lat: Number(latitude), lng: Number(longitude), latitude: Number(latitude), longitude: Number(longitude), accuracyMeters: Number(accuracyMeters) || 0, speedKmh: Number(speedKmh) || 0, isSharingEnabled };
+  const participant = normalizeLiveEventParticipant({ ...(existing || { liveEventId, hostId, accountId }), ...patch });
   const next = [...participants];
   if (index >= 0) next[index] = participant; else next.push(participant);
   await saveLiveEventParticipants(next);

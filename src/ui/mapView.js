@@ -11,6 +11,13 @@ const RED_ICON = L.icon({
 
 const BLUE_ICON = new L.Icon.Default();
 
+export const LIVE_PARTICIPANT_STALE_MARKER_OPTIONS = { opacity: 0.45, zIndexOffset: -200 };
+export const LIVE_PARTICIPANT_FRESH_MARKER_OPTIONS = { opacity: 1, zIndexOffset: 0 };
+
+export function liveParticipantMarkerOptions(isStale) {
+  return isStale ? LIVE_PARTICIPANT_STALE_MARKER_OPTIONS : LIVE_PARTICIPANT_FRESH_MARKER_OPTIONS;
+}
+
 export function createMap(id = 'map') {
   const map = L.map(id, {
     dragging: true,

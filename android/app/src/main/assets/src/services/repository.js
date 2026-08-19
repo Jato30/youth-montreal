@@ -3,12 +3,18 @@ import { loadHosts as loadLocalHosts, saveHosts as saveLocalHosts } from './stor
 
 const REPORTS_KEY = 'youth-montreal-reports';
 const HOST_REQUESTS_KEY = 'youth-montreal-host-requests';
+const HOST_MEMBERSHIPS_KEY = 'youth-montreal-host-memberships';
+const LIVE_EVENTS_KEY = 'youth-montreal-live-events';
+const LIVE_EVENT_PARTICIPANTS_KEY = 'youth-montreal-live-event-participants';
 const AUDIT_LOG_KEY = 'youth-montreal-audit-log';
 const PENDING_SYNC_KEY = 'youth-montreal-pending-sync';
 const SYNC_URL_KEY = 'youth-montreal-sheets-url';
 const LEGACY_LOCAL_KEYS = {
   [REPORTS_KEY]: ['youth-montreal-suggestions'],
-  [HOST_REQUESTS_KEY]: ['youth-montreal-title-requests']
+  [HOST_REQUESTS_KEY]: ['youth-montreal-title-requests'],
+  [HOST_MEMBERSHIPS_KEY]: ['youth-montreal-hostMemberships'],
+  [LIVE_EVENTS_KEY]: ['youth-montreal-liveEvents'],
+  [LIVE_EVENT_PARTICIPANTS_KEY]: ['youth-montreal-liveEventParticipants']
 };
 const syncListeners = new Set();
 const REMOTE_TIMEOUT_MS = 8000;
@@ -130,6 +136,26 @@ async function remotePost(resource, payload) {
   }
 }
 
+
+
+async function remotePostJson(payload) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REMOTE_TIMEOUT_MS);
+  try {
+    const response = await fetch(getRemoteUrl(), {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    }).finally(() => clearTimeout(timer));
+    if (!response.ok) throw new Error('Remote POST failed');
+    const data = await response.json();
+    if (data?.error) throw new Error(`Remote POST error: ${data.error}`);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 function readLocalList(key) {
   const saved = localStorage.getItem(key) || migrateLegacyLocalList(key);
   try {
@@ -155,10 +181,66 @@ function migrateLegacyLocalList(key) {
   return '';
 }
 
+function normalizeLiveEvent(entry = {}) {
+  const now = new Date().toISOString();
+  const titleBase = String(entry.titleBase || entry.title || '').trim();
+  return {
+    id: entry.id || crypto.randomUUID(),
+    title: String(entry.title || titleBase).trim(),
+    titleBase,
+    description: String(entry.description || ''),
+    status: entry.status || 'active',
+    joinCode: String(entry.joinCode || '').trim(),
+    createdByAccountId: String(entry.createdByAccountId || ''),
+    createdByHostId: String(entry.createdByHostId || ''),
+    startedAt: entry.startedAt || now,
+    endedAt: entry.endedAt || '',
+    filters: entry.filters && typeof entry.filters === 'object' ? entry.filters : {}
+  };
+}
+
+function normalizeLiveEventParticipant(entry = {}) {
+  return {
+    liveEventId: String(entry.liveEventId || ''),
+    hostId: String(entry.hostId || ''),
+    accountId: String(entry.accountId || ''),
+    isLead: Boolean(entry.isLead),
+    joinedAt: entry.joinedAt || new Date().toISOString(),
+    capturedAt: entry.capturedAt || entry.lastLocationAt || '',
+    lastLocationAt: entry.lastLocationAt || entry.capturedAt || '',
+    lat: Number.isFinite(Number(entry.lat ?? entry.latitude)) ? Number(entry.lat ?? entry.latitude) : null,
+    lng: Number.isFinite(Number(entry.lng ?? entry.longitude)) ? Number(entry.lng ?? entry.longitude) : null,
+    latitude: Number.isFinite(Number(entry.latitude ?? entry.lat)) ? Number(entry.latitude ?? entry.lat) : null,
+    longitude: Number.isFinite(Number(entry.longitude ?? entry.lng)) ? Number(entry.longitude ?? entry.lng) : null,
+    accuracyMeters: Number.isFinite(Number(entry.accuracyMeters)) ? Number(entry.accuracyMeters) : 0,
+    speedKmh: Number.isFinite(Number(entry.speedKmh)) ? Number(entry.speedKmh) : 0,
+    isSharingEnabled: entry.isSharingEnabled !== false
+  };
+}
+
+function resolveUniqueLiveEventTitle(titleBase, liveEvents, currentId = '') {
+  const normalizedBase = String(titleBase || '').trim() || 'Live Event';
+  const activeTitles = new Set((liveEvents || [])
+    .filter((event) => event.status === 'active' && event.id !== currentId)
+    .map((event) => String(event.title || '').trim().toLowerCase())
+    .filter(Boolean));
+  let candidate = normalizedBase;
+  let suffix = 2;
+  while (activeTitles.has(candidate.toLowerCase())) {
+    candidate = `${normalizedBase} (${suffix})`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
 function normalizeEntry(entry) {
   const canonicalEntry = {
     ...entry,
-    hostName: entry?.hostName || entry?.churchName || ''
+    hostName: entry?.hostName || entry?.churchName || '',
+    type: entry?.type || (entry?.targetHostId ? 'join_existing_host' : 'new_host'),
+    targetHostId: entry?.targetHostId || '',
+    requesterAccountId: entry?.requesterAccountId || entry?.accountId || '',
+    requesterEmail: entry?.requesterEmail || entry?.email || ''
   };
   return {
     status: 'pending',
@@ -263,6 +345,14 @@ export async function loadHostRequests() {
   return loadList('hostRequests', HOST_REQUESTS_KEY);
 }
 
+export async function loadHostMemberships() {
+  return loadList('hostMemberships', HOST_MEMBERSHIPS_KEY);
+}
+
+export async function saveHostMemberships(hostMemberships) {
+  await saveList('hostMemberships', HOST_MEMBERSHIPS_KEY, hostMemberships);
+}
+
 export async function submitReport(report) {
   const list = await loadReports();
   list.push(normalizeEntry(report));
@@ -282,9 +372,9 @@ export async function updateReportStatus(id, status) {
   return next;
 }
 
-export async function updateHostRequestStatus(id, status) {
+export async function updateHostRequestStatus(id, status, patch = {}) {
   const list = await loadHostRequests();
-  const next = list.map((item) => (item.id === id ? { ...item, status, reviewedAt: new Date().toISOString() } : item));
+  const next = list.map((item) => (item.id === id ? { ...item, ...patch, status, reviewedAt: new Date().toISOString() } : item));
   await saveList('hostRequests', HOST_REQUESTS_KEY, next);
   return next;
 }
@@ -298,4 +388,104 @@ export async function appendAuditLog(entry) {
   const next = [{ id: crypto.randomUUID(), createdAt: new Date().toISOString(), ...entry }, ...list].slice(0, 100);
   writeLocalList(AUDIT_LOG_KEY, next);
   return next;
+}
+
+
+export async function verifySessionToken({ role, token = '', accessCode = '' }) {
+  if (!canAttemptRemote('session')) return { valid: false };
+  try {
+    const result = await remotePostJson({ action: 'verifySession', role, token, accessCode });
+    return { valid: Boolean(result?.valid), accountId: result?.accountId || null, isAdm: Boolean(result?.isAdm), hostMembership: result?.hostMembership || null };
+  } catch {
+    return { valid: false };
+  }
+}
+
+export async function exchangeHostAccessCode(accessCode) {
+  if (!canAttemptRemote('session')) return null;
+  try {
+    const result = await remotePostJson({ action: 'exchangeHostAccessCode', accessCode });
+    if (!result?.token) return null;
+    return { token: result.token, accountId: result.accountId || null, hostMembership: result.hostMembership || null };
+  } catch {
+    return null;
+  }
+}
+
+
+export async function loadLiveEvents() {
+  return loadList('liveEvents', LIVE_EVENTS_KEY).then((list) => list.map(normalizeLiveEvent));
+}
+
+export async function saveLiveEvents(liveEvents) {
+  await saveList('liveEvents', LIVE_EVENTS_KEY, (liveEvents || []).map(normalizeLiveEvent));
+}
+
+export async function loadLiveEventParticipants() {
+  return loadList('liveEventParticipants', LIVE_EVENT_PARTICIPANTS_KEY).then((list) => list.map(normalizeLiveEventParticipant));
+}
+
+export async function saveLiveEventParticipants(participants) {
+  await saveList('liveEventParticipants', LIVE_EVENT_PARTICIPANTS_KEY, (participants || []).map(normalizeLiveEventParticipant));
+}
+
+export async function createLiveEvent(liveEvent) {
+  if (canAttemptRemote('liveEvents')) {
+    try {
+      const result = await remotePostJson({ action: 'createLiveEvent', liveEvent });
+      if (result?.liveEvent) return normalizeLiveEvent(result.liveEvent);
+    } catch (error) {
+      markPending('liveEvents', await loadLiveEvents(), error instanceof Error ? error.message : String(error));
+    }
+  }
+  const liveEvents = await loadLiveEvents();
+  const nextLiveEvent = normalizeLiveEvent(liveEvent);
+  nextLiveEvent.titleBase = nextLiveEvent.titleBase || nextLiveEvent.title;
+  nextLiveEvent.title = resolveUniqueLiveEventTitle(nextLiveEvent.titleBase, liveEvents, nextLiveEvent.id);
+  liveEvents.push(nextLiveEvent);
+  await saveLiveEvents(liveEvents);
+  return nextLiveEvent;
+}
+
+export async function joinLiveEvent({ liveEventId = '', joinCode = '', hostId = '', accountId = '', isAdm = false, isLead = false }) {
+  if (canAttemptRemote('liveEvents')) {
+    const result = await remotePostJson({ action: 'joinLiveEvent', liveEventId, joinCode, hostId, accountId, isAdm, isLead });
+    if (result?.participant) return normalizeLiveEventParticipant(result.participant);
+    throw new Error(result?.error || 'Unable to join live event');
+  }
+  const liveEvents = await loadLiveEvents();
+  const liveEvent = liveEvents.find((event) => event.id === liveEventId && event.status === 'active');
+  if (!liveEvent) throw new Error('Live event not found');
+  if (!isAdm && liveEvent.joinCode !== String(joinCode || '').trim()) throw new Error('Invalid join code');
+  const participants = await loadLiveEventParticipants();
+  const participant = normalizeLiveEventParticipant({ liveEventId, hostId, accountId, isLead });
+  const next = participants.filter((item) => !(item.liveEventId === liveEventId && item.hostId === hostId && item.accountId === accountId));
+  next.push(participant);
+  await saveLiveEventParticipants(next);
+  return participant;
+}
+
+export async function publishLiveEventParticipantLocation({ liveEventId = '', hostId = '', accountId = '', isAdm = false, capturedAt = new Date().toISOString(), lat, lng, latitude = lat, longitude = lng, speedKmh = 0, accuracyMeters = 0, isSharingEnabled = true }) {
+  if (canAttemptRemote('liveEventParticipants')) {
+    const result = await remotePostJson({ action: 'publishLiveEventParticipantLocation', liveEventId, hostId, accountId, isAdm, capturedAt, lat: latitude, lng: longitude, latitude, longitude, speedKmh, accuracyMeters, isSharingEnabled });
+    if (result?.participant) return normalizeLiveEventParticipant(result.participant);
+    throw new Error(result?.error || 'Unable to publish live event location');
+  }
+  const memberships = await loadHostMemberships();
+  const isMember = memberships.some((item) => item.hostId === hostId && item.accountId === accountId && item.status !== 'revoked');
+  if (!isAdm && !isMember) throw new Error('Only host members can publish this host location');
+  const liveEvents = await loadLiveEvents();
+  if (!liveEvents.some((event) => event.id === liveEventId && event.status === 'active')) throw new Error('Live event not found');
+  const participants = await loadLiveEventParticipants();
+  const index = participants.findIndex((item) => item.liveEventId === liveEventId && item.hostId === hostId && item.accountId === accountId);
+  const existing = participants[index];
+  const capturedTime = new Date(capturedAt).getTime();
+  const existingTime = new Date(existing?.capturedAt || existing?.lastLocationAt || 0).getTime();
+  if (Number.isFinite(existingTime) && Number.isFinite(capturedTime) && capturedTime <= existingTime) throw new Error('Stale or out-of-order live event location');
+  const patch = { capturedAt, lastLocationAt: capturedAt, lat: Number(latitude), lng: Number(longitude), latitude: Number(latitude), longitude: Number(longitude), accuracyMeters: Number(accuracyMeters) || 0, speedKmh: Number(speedKmh) || 0, isSharingEnabled };
+  const participant = normalizeLiveEventParticipant({ ...(existing || { liveEventId, hostId, accountId }), ...patch });
+  const next = [...participants];
+  if (index >= 0) next[index] = participant; else next.push(participant);
+  await saveLiveEventParticipants(next);
+  return participant;
 }
